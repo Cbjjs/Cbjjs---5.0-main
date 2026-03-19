@@ -89,8 +89,8 @@ export const IDCardMobile: React.FC<IDCardMobileProps> = ({
                     </div>
 
                     <div className="w-[68%] flex flex-col pl-10 z-10 justify-center">
-                        {/* [AJUSTE LOGO]: gap reduzido para unir o escudo ao texto */}
-                        <div className="flex items-center gap-3 mb-6 ml-[-30px]">
+                        {/* [AJUSTE LOGO]: gap-1.5 para máxima proximidade visual */}
+                        <div className="flex items-center gap-1.5 mb-6 ml-[-30px]">
                              <img src="https://saltonaweb.sh27.com.br/cbjjs/cbjjs.png" alt="CBJJS" className="w-[6rem] h-[6rem] shrink-0 drop-shadow-lg" />
                              <div className="flex flex-col">
                                 <h2 className="text-5xl font-black text-white leading-none tracking-tighter italic">CBJJS</h2>
