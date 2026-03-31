@@ -48,9 +48,12 @@ export const MyIDCard: React.FC<MyIDCardProps> = ({ onNavigate }) => {
 
   const dependents = dependentsData?.data || [];
   
+  // REGRA DE EXIBIÇÃO: Além de tudo, a academia PRECISA estar aprovada (isAcademyApproved)
+  const isAcademyApproved = user.academy?.status === RegistrationStatus.APPROVED;
+
   const isParentCardActive = user.isFederationApproved || (
     user.isBoardingComplete && 
-    user.academy?.status === RegistrationStatus.APPROVED && 
+    isAcademyApproved && // Exigência crítica adicionada
     user.documents.identity.status === DocumentStatus.APPROVED &&
     user.documents.profile?.status === DocumentStatus.APPROVED &&
     user.documents.medical?.status === DocumentStatus.APPROVED &&
@@ -79,9 +82,11 @@ export const MyIDCard: React.FC<MyIDCardProps> = ({ onNavigate }) => {
                                 <Lock size={16} className="text-white" />
                             </div>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Nenhuma Carteirinha Ativa</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Aguardando Aprovação</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-                            Sua carteirinha digital e a de seus filhos aparecerão aqui assim que as afiliações forem aprovadas pela confederação.
+                            {user.academyId && !isAcademyApproved 
+                                ? `Sua carteirinha digital foi bloqueada temporariamente porque você alterou sua academia. Assim que o professor da "${user.academy?.name}" aprovar seu vínculo, ela voltará a aparecer aqui.`
+                                : `Sua carteirinha digital e a de seus filhos aparecerão aqui assim que as afiliações forem aprovadas pela confederação e os vínculos com as academias confirmados.`}
                         </p>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
@@ -134,7 +139,7 @@ export const MyIDCard: React.FC<MyIDCardProps> = ({ onNavigate }) => {
                         <div className="mt-8 flex flex-col items-center gap-4 text-center px-4">
                             <div className="flex items-center gap-2 text-green-600 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-full border border-green-100 dark:border-green-800 shadow-sm animate-fadeIn">
                                 <CheckCircle size={14} />
-                                <span className="text-xs font-bold uppercase tracking-wider">Documentos Autenticados</span>
+                                <span className="text-xs font-black uppercase tracking-wider">Documentos Autenticados</span>
                             </div>
                             <p className="text-sm text-gray-500 max-w-md leading-relaxed">
                                 Estes documentos digitais são válidos para identificação em todos os campeonatos oficiais da CBJJS.

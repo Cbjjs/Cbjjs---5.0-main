@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, DocumentStatus, PaymentStatus, RegistrationStatus } from '../types';
 import { supabase } from '../lib/supabase';
-import { Save, RefreshCw, Smartphone, Printer, MessageCircle } from 'lucide-react';
+import { Save, RefreshCw, Smartphone, Printer, MessageCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { PaymentModal } from '../components/PaymentModal';
 import { PaymentInviteModal, PaymentPlanOption } from '../components/PaymentInviteModal';
@@ -77,7 +77,11 @@ export const Profile: React.FC = () => {
 
   if (!user) return null;
 
+  // LÓGICA DE APROVAÇÃO: Agora exige obrigatoriamente que a ACADEMIA esteja aprovada (RegistrationStatus.APPROVED)
+  const isAcademyApproved = user.academy?.status === RegistrationStatus.APPROVED;
+  
   const isFederationApproved = user.isFederationApproved || (
+    isAcademyApproved &&
     user.documents.identity.status === DocumentStatus.APPROVED && 
     user.documents.profile?.status === DocumentStatus.APPROVED &&
     user.documents.medical?.status === DocumentStatus.APPROVED &&
@@ -116,12 +120,18 @@ export const Profile: React.FC = () => {
         
         if (wasAcademyChanged) {
             addToast('success', "Academia alterada! Seu perfil agora aguarda aprovação do novo professor.");
+            // Força o fechamento da edição e atualização dos dados locais
+            setIsEditing(false);
+            await refreshProfile();
         } else {
             addToast('success', "Perfil atualizado!");
+            setIsEditing(false);
         }
-        
-        setIsEditing(false);
-    } catch (error: any) { addToast('error', error.message); } finally { setIsSubmitting(false); }
+    } catch (error: any) { 
+        addToast('error', error.message); 
+    } finally { 
+        setIsSubmitting(false); 
+    }
   };
 
   const handleManualPaymentCheck = async () => {
@@ -196,7 +206,7 @@ export const Profile: React.FC = () => {
                         fullName: user.fullName, email: user.email, cpf: user.cpf, phone: user.phone, dob: user.dob,
                         nationality: user.nationality, address: user.address ? { ...user.address } : { zip: '', street: '', city: '', state: '', number: '', complement: '' },
                         athleteData: { ...user.athleteData! },
-                        academyId: user.academyId // Inicializa o academyId no form
+                        academyId: user.academyId
                     });
                     setIsEditing(true);
                  }} className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 dark:border-slate-700 dark:bg-slate-800 rounded-xl font-bold shadow-sm hover:bg-gray-50 transition-all text-sm">
@@ -212,6 +222,22 @@ export const Profile: React.FC = () => {
              )}
          </div>
       </div>
+
+      {/* AVISO DE ACADEMIA PENDENTE */}
+      {!isAcademyApproved && user.academyId && (
+          <div className="p-5 bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 rounded-2xl flex items-start gap-4 animate-fadeIn shadow-sm">
+              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-amber-600">
+                  <AlertTriangle size={24} />
+              </div>
+              <div>
+                  <h4 className="font-black text-amber-800 dark:text-amber-200 uppercase text-xs tracking-widest mb-1">Aguardando Professor</h4>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
+                      Você vinculou seu perfil à unidade <span className="font-bold">"{user.academy?.name}"</span>. 
+                      O professor responsável precisa aprovar sua entrada para que sua filiação seja validada.
+                  </p>
+              </div>
+          </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="space-y-6">
