@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, DocumentStatus, PaymentStatus, RegistrationStatus } from '../types';
 import { supabase } from '../lib/supabase';
-import { Save, RefreshCw, Smartphone, Printer, Building, CheckCircle, Clock, MessageCircle } from 'lucide-react';
+import { Save, RefreshCw, Smartphone, Printer, MessageCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { PaymentModal } from '../components/PaymentModal';
 import { PaymentInviteModal, PaymentPlanOption } from '../components/PaymentInviteModal';
@@ -14,6 +14,7 @@ import { fetchAddressByZip } from '../utils/address';
 import { FederationStatusSection } from '../components/profile/FederationStatusSection';
 import { DocumentsSection } from '../components/profile/DocumentsSection';
 import { PersonalInfoSection } from '../components/profile/PersonalInfoSection';
+import { AcademySection } from '../components/profile/AcademySection';
 
 export const Profile: React.FC = () => {
   const { user, updateUser, refreshProfile } = useAuth();
@@ -33,9 +34,6 @@ export const Profile: React.FC = () => {
   const [paymentData, setPaymentData] = useState({ pixId: '', pixCode: '', qrCodeBase64: '', amount: '0,00' });
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
-
-  const labelClass = "block text-[10px] font-black text-gray-400 uppercase mb-1 tracking-widest";
-  const cardClass = "bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col transition-all hover:shadow-md h-auto";
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -112,8 +110,16 @@ export const Profile: React.FC = () => {
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
+        const wasAcademyChanged = editForm.academyId && editForm.academyId !== user.academyId;
+        
         await updateUser(editForm);
-        addToast('success', "Perfil atualizado!");
+        
+        if (wasAcademyChanged) {
+            addToast('success', "Academia alterada! Seu perfil agora aguarda aprovação do novo professor.");
+        } else {
+            addToast('success', "Perfil atualizado!");
+        }
+        
         setIsEditing(false);
     } catch (error: any) { addToast('error', error.message); } finally { setIsSubmitting(false); }
   };
@@ -171,7 +177,6 @@ export const Profile: React.FC = () => {
       } finally { setIsGeneratingPayment(false); }
   };
 
-  // WhatsApp link generator
   const getWhatsAppLink = () => {
     const text = encodeURIComponent(`Olá, estou tendo dificuldades em confirmar meu pagamento, meu email é ${user.email}`);
     return `https://wa.me/5521988649788?text=${text}`;
@@ -190,7 +195,8 @@ export const Profile: React.FC = () => {
                     setEditForm({
                         fullName: user.fullName, email: user.email, cpf: user.cpf, phone: user.phone, dob: user.dob,
                         nationality: user.nationality, address: user.address ? { ...user.address } : { zip: '', street: '', city: '', state: '', number: '', complement: '' },
-                        athleteData: { ...user.athleteData! }
+                        athleteData: { ...user.athleteData! },
+                        academyId: user.academyId // Inicializa o academyId no form
                     });
                     setIsEditing(true);
                  }} className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 dark:border-slate-700 dark:bg-slate-800 rounded-xl font-bold shadow-sm hover:bg-gray-50 transition-all text-sm">
@@ -217,25 +223,12 @@ export const Profile: React.FC = () => {
               isCheckingPayment={isCheckingPayment}
             />
 
-            <div className={cardClass}>
-                <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <Building className="text-cbjjs-blue" size={18} /> Minha Academia
-                </h3>
-                <div className="space-y-4">
-                    <div>
-                        <span className={labelClass}>Unidade Vinculada</span>
-                        <p className="font-bold text-sm dark:text-white">{user.academy?.name || 'Nenhuma unidade selecionada'}</p>
-                    </div>
-                    {user.academy && (
-                        <div className="flex items-center justify-between pt-2">
-                            <span className={labelClass}>Status Vínculo</span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase flex items-center gap-1 ${user.academy.status === RegistrationStatus.APPROVED ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                {user.academy.status === RegistrationStatus.APPROVED ? <><CheckCircle size={10}/> Aprovado</> : <><Clock size={10}/> Aguardando Professor</>}
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <AcademySection 
+              user={user}
+              isEditing={isEditing}
+              selectedAcademyId={editForm.academyId}
+              onAcademyChange={(id) => setEditForm(prev => ({ ...prev, academyId: id }))}
+            />
 
             <DocumentsSection user={user} />
         </div>
@@ -257,7 +250,6 @@ export const Profile: React.FC = () => {
         </div>
       </div>
 
-      {/* WhatsApp Support Button - Fixed display when payment is pending */}
       {user.paymentStatus !== PaymentStatus.PAID && (
           <a 
             href={getWhatsAppLink()}

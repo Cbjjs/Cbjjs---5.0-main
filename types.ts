@@ -152,6 +152,8 @@ export interface User {
     belt?: UserDocument;
   };
 
+  // ID da academia para facilitar edições
+  academyId?: string;
   academy?: {
     isOwner: boolean;
     name: string;
@@ -160,7 +162,6 @@ export interface User {
     status: RegistrationStatus;
   };
 
-  // Novo campo para listar todas as academias que o professor possui
   ownedAcademies?: {
     id: string;
     name: string;

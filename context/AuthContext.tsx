@@ -51,15 +51,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearError = () => setError(null);
 
   const mapProfileToUser = (profile: any, academyInfo: { name: string, phone?: string }, authEmail?: string): User => {
-    // LOG DE DEPURAÇÃO: Verificando o que vem do Banco
-    console.log("[DEBUG AUTH] Mapeando perfil bruto:", { id: profile.id, dob: profile.dob, name: profile.full_name });
-    
     return {
         id: profile.id,
         federationId: profile.federation_id, 
         fullName: profile.full_name || 'Usuário',
         email: profile.email || authEmail || '',
-        dob: profile.dob || '', // Se aqui vier vazio, o banco está retornando nulo
+        dob: profile.dob || '', 
         role: (profile.role as Role) || Role.STUDENT,
         isBoardingComplete: !!profile.is_boarding_complete,
         isFederationApproved: !!profile.is_federation_approved,
@@ -83,6 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             profile: { status: (profile.doc_profile_status as DocumentStatus) || DocumentStatus.MISSING, url: profile.profile_image_url, rejectionReason: profile.doc_profile_reason },
             belt: { status: (profile.doc_belt_status as DocumentStatus) || DocumentStatus.MISSING, url: profile.doc_belt_url, rejectionReason: profile.doc_belt_reason }
         },
+        academyId: profile.academy_id,
         academy: profile.academy_id ? { name: academyInfo.name, phone: academyInfo.phone, isOwner: false, status: (profile.academy_status as RegistrationStatus) || RegistrationStatus.PENDING } : undefined
     };
   };
@@ -201,14 +199,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       if (authError) throw authError;
 
-      // AJUSTE TEMPORÁRIO: Se houver sessão imediata (confirmação desabilitada no Supabase),
-      // entra direto. Caso contrário, mantém o comportamento de aguardar confirmação.
       if (data.session && data.user) {
         setAuthStatus('AUTHENTICATED');
         await loadUserProfile(data.user.id, data.user.email || '', true);
       } else if (data.user && !data.session) {
-        // Fluxo original preservado: Se você ativar a confirmação no Supabase,
-        // este bloco voltará a funcionar e mostrará a tela de "Verifique seu e-mail".
         setLastRegisteredEmail(userData.email!);
         setNeedsEmailConfirmation(true);
       }
@@ -241,7 +235,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       address: updates.address,
       belt: updates.athleteData?.belt,
       belt_history: updates.athleteData,
-      theme: updates.theme
+      theme: updates.theme,
+      academy_id: updates.academyId // Adicionado para permitir troca de academia
     }).eq('id', user.id);
     
     if (error) throw error;
@@ -254,7 +249,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       nationality: data.nationality,
       cpf: data.cpf,
       gender: data.gender,
-      dob: data.dob, // CORREÇÃO: Onboarding agora salva a data se necessário
+      dob: data.dob, 
       address: data.address,
       belt: data.athleteData?.belt,
       academy_id: data.selectedAcademyId,
