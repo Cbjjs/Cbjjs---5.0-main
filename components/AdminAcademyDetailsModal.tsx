@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FileText, CheckCircle, MapPin, Phone, User as UserIcon, ExternalLink, Loader2, RefreshCw, AlertCircle, ArrowRight, Camera, Download } from 'lucide-react';
+import { X, FileText, CheckCircle, MapPin, Phone, User as UserIcon, ExternalLink, Loader2, RefreshCw, AlertCircle, ArrowRight, Camera, Download, Trash2 } from 'lucide-react';
 import { Academy, RegistrationStatus, DocumentStatus } from '../types';
 import { modalLabelClass } from './AdminShared';
 import { AdminProfessorDetailsModal } from './AdminProfessorDetailsModal';
@@ -16,6 +16,7 @@ interface AdminAcademyDetailsModalProps {
     onApproveUpdate: (requestId: string, academyId: string, newData: any) => Promise<void>;
     onApproveDoc: (academyId: string, type: string) => Promise<void>;
     onRejectDoc: (academyId: string, type: string) => void;
+    onDeleteAcademy: (academy: AcademyWithProfile) => void;
     processingId: string | null;
 }
 
@@ -27,6 +28,7 @@ export const AdminAcademyDetailsModal: React.FC<AdminAcademyDetailsModalProps> =
     onApproveUpdate,
     onApproveDoc,
     onRejectDoc,
+    onDeleteAcademy,
     processingId
 }) => {
     const [viewingProfId, setViewingProfId] = useState<string | null>(null);
@@ -218,9 +220,9 @@ export const AdminAcademyDetailsModal: React.FC<AdminAcademyDetailsModalProps> =
                         </div>
                     </div>
 
-                    {/* Ação de Aprovação Global da Academia */}
-                    {academy.status === RegistrationStatus.PENDING && (
-                        <div className="pt-10 border-t dark:border-slate-700 text-center">
+                    {/* Ação de Aprovação Global da Academia e Exclusão */}
+                    <div className="pt-10 border-t dark:border-slate-700 flex flex-col gap-4">
+                        {academy.status === RegistrationStatus.PENDING && (
                             <button 
                                 onClick={() => onApproveAcademy(academy.id)} 
                                 disabled={processingId === academy.id}
@@ -229,8 +231,15 @@ export const AdminAcademyDetailsModal: React.FC<AdminAcademyDetailsModalProps> =
                                 {processingId === academy.id ? <Loader2 className="animate-spin" size={20}/> : <CheckCircle size={20}/>}
                                 Aprovar Cadastro Completo da Unidade
                             </button>
-                        </div>
-                    )}
+                        )}
+                        
+                        <button 
+                            onClick={() => onDeleteAcademy(academy)}
+                            className="w-full py-4 text-red-500 font-black uppercase text-xs tracking-widest hover:bg-red-50 dark:hover:bg-red-900/10 rounded-2xl transition-all flex items-center justify-center gap-2 border border-transparent hover:border-red-100"
+                        >
+                            <Trash2 size={18}/> Excluir a unidade
+                        </button>
+                    </div>
 
                     {/* Revisão de Atualização de Dados (Mantido) */}
                     {academy.pendingChangeRequest && (

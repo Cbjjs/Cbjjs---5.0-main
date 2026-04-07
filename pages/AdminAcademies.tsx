@@ -117,6 +117,10 @@ export const AdminAcademies: React.FC = () => {
             onApproveUpdate={handleApproveUpdate}
             onApproveDoc={handleApproveDoc}
             onRejectDoc={handleRejectDoc}
+            onDeleteAcademy={(acc) => {
+                setViewingAcademy(null);
+                setAcademyToDelete(acc);
+            }}
             processingId={processingId}
           />
 
