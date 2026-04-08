@@ -8,42 +8,71 @@ export type DiagnosticLog = {
     diagnosis?: string;
 };
 
+const STORAGE_KEY = 'cbjjs_diagnostic_logs';
+
 class DataBridgeIntegrityProbe {
     private logs: DiagnosticLog[] = [];
     private listeners: ((logs: DiagnosticLog[]) => void)[] = [];
 
     constructor() {
-        // Captura automática de erros não tratados que causam a tela branca
+        // Recupera logs anteriores do LocalStorage (Persistência pós-crash)
         if (typeof window !== 'undefined') {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    this.logs = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn("Falha ao recuperar logs do storage", e);
+            }
+
+            // Captura automática de erros fatais
             window.onerror = (message, source, lineno, colno, error) => {
-                this.addLog('CRITICAL', `ERRO FATAL (Global): ${message}`, { source, lineno, colno, stack: error?.stack });
+                this.addLog('CRITICAL', `ERRO FATAL (Render): ${message}`, { 
+                    source, 
+                    lineno, 
+                    stack: error?.stack 
+                });
             };
+            
             window.onunhandledrejection = (event) => {
-                this.addLog('ERROR', `Promessa Rejeitada (Async): ${event.reason?.message || event.reason}`, { reason: event.reason });
+                this.addLog('ERROR', `Promessa Rejeitada (Async): ${event.reason?.message || event.reason}`, { 
+                    reason: event.reason 
+                });
             };
+        }
+    }
+
+    private saveToStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.logs));
+        } catch (e) {
+            console.warn("Storage cheio ou inacessível", e);
         }
     }
 
     addLog(level: DiagnosticLog['level'], message: string, payload?: any) {
         const log: DiagnosticLog = {
-            timestamp: new Date().toLocaleTimeString(),
+            timestamp: new Date().toLocaleString('pt-BR'),
             level,
             message,
             payload,
             diagnosis: this.diagnose(level, message, payload)
         };
-        this.logs = [log, ...this.logs].slice(0, 100);
+        this.logs = [log, ...this.logs].slice(0, 50); // Mantém os últimos 50 eventos
+        this.saveToStorage();
         this.notify();
         console.log(`[PROBE][${level}] ${message}`, payload);
     }
 
     private diagnose(level: string, message: string, payload: any): string | undefined {
         if (level === 'ERROR' || level === 'CRITICAL') {
-            if (message.includes('UUID') || (payload?.code === '22P02')) return 'Falha de Casting: O ID enviado não é um UUID válido no banco.';
-            if (payload?.code === '42501') return 'RLS Block: O usuário logado não tem permissão de DELETE nesta linha.';
-            if (payload?.message?.includes('foreign key')) return 'Integridade Referencial: Existem atletas vinculados a esta academia.';
-            if (message.includes('Render') || message.includes('Component')) return 'Crash de Renderização: O código da interface tentou acessar uma propriedade inexistente após a ação.';
-            return 'Erro Desconhecido do Postgres ou Runtime.';
+            const msg = (message + JSON.stringify(payload)).toLowerCase();
+            if (msg.includes('uuid') || payload?.code === '22p02') return 'Falha de ID: O sistema tentou enviar um ID mal formatado.';
+            if (payload?.code === '42501' || msg.includes('permission denied')) return 'RLS Block: Você não tem permissão no Banco de Dados para excluir esta linha.';
+            if (msg.includes('foreign key') || msg.includes('violates foreign key')) return 'Integridade: Existem ATLETAS vinculados a esta academia. Remova-os primeiro.';
+            if (msg.includes('reading') || msg.includes('undefined') || msg.includes('null')) return 'Crash de Interface: O código tentou ler dados de uma academia que não existe mais no estado da tela.';
+            return 'Erro de Execução Crítico.';
         }
         return undefined;
     }
@@ -55,40 +84,35 @@ class DataBridgeIntegrityProbe {
     }
 
     private notify() {
-        this.listeners.forEach(l => l(this.logs));
+        this.listeners.forEach(l => l([...this.logs]));
     }
 
     async deepScan(entityTable: string, id: string) {
-        this.addLog('INFO', `Iniciando Deep Scan na tabela ${entityTable} para ID: ${id}`);
-
+        this.addLog('INFO', `Varredura Profunda iniciada para ID: ${id}`);
         try {
-            const [direct, nested, raw] = await Promise.all([
+            const [direct, raw] = await Promise.all([
                 supabase.from(entityTable).select('id').eq('id', id).maybeSingle(),
-                supabase.from(entityTable).select('id').eq('id', id).limit(1),
                 supabase.from(entityTable).select('*').filter('id', 'eq', id)
             ]);
 
             const mismatch = {
-                direct: !!direct.data,
-                nested: !!nested.data,
-                raw: !!raw.data && (raw.data as any).length > 0,
-                dbCount: (raw.data as any)?.length || 0
+                id_exists: !!direct.data || (raw.data && (raw.data as any).length > 0),
+                raw_data: raw.data
             };
 
-            if (mismatch.dbCount > 0 && !mismatch.direct) {
-                this.addLog('CRITICAL', 'Ponte de Dados Quebrada: Registro existe no banco mas falha na busca direta.', mismatch);
-            } else {
-                this.addLog('INFO', 'Scan concluído. Registro localizado.', mismatch);
-            }
+            this.addLog('INFO', mismatch.id_exists ? 'Registro localizado no DB.' : 'Registro NÃO ENCONTRADO no DB.', mismatch);
             return mismatch;
         } catch (err: any) {
-            this.addLog('ERROR', `Falha ao executar Deep Scan: ${err.message}`, err);
+            this.addLog('ERROR', `Falha no Scan: ${err.message}`, err);
             return null;
         }
     }
 
-    getLogs() { return this.logs; }
-    clear() { this.logs = []; this.notify(); }
+    clear() {
+        this.logs = [];
+        localStorage.removeItem(STORAGE_KEY);
+        this.notify();
+    }
 }
 
 export const probe = new DataBridgeIntegrityProbe();
