@@ -10,9 +10,9 @@ import { probe } from '../utils/diagnosticProbe';
 export const AdminAcademies: React.FC = () => {
   const {
     academies, totalCount, totalPages, isLoading, isError, subTab, searchTerm, page,
-    viewingAcademy, processingId, academyToDelete, deleteConfirmText, isDeleting,
+    viewingAcademy, processingId, academyToDelete, isDeleting,
     rejectingDoc, rejectionReason,
-    setSubTab, setSearchTerm, setPage, setViewingAcademy, setAcademyToDelete, setDeleteConfirmText,
+    setSubTab, setSearchTerm, setPage, setViewingAcademy,
     setRejectingDoc, setRejectionReason,
     refetch, handleApproveAcademy, handleApproveUpdate, handleConfirmDelete,
     handleApproveDoc, handleRejectDoc, confirmRejectDoc
@@ -21,13 +21,12 @@ export const AdminAcademies: React.FC = () => {
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Intercepta a confirmação de exclusão para diagnóstico
-  const onBeforeConfirmDelete = async () => {
-      if (academyToDelete) {
-          probe.addLog('INFO', `Iniciando diagnóstico para exclusão: ${academyToDelete.name}`);
-          // O deepScan agora é mais seguro e loga erros internos
-          await probe.deepScan('academies', academyToDelete.id);
-          handleConfirmDelete();
+  // Executa a exclusão direta com diagnóstico integrado
+  const handleDirectDelete = async (academy: any) => {
+      if (confirm(`Deseja realmente excluir permanentemente a unidade "${academy.name}"?`)) {
+          probe.addLog('INFO', `Iniciando exclusão direta: ${academy.name}`);
+          await probe.deepScan('academies', academy.id);
+          handleConfirmDelete(academy);
       }
   };
 
@@ -101,7 +100,7 @@ export const AdminAcademies: React.FC = () => {
                             key={academy.id}
                             academy={academy}
                             onClick={setViewingAcademy}
-                            onDelete={setAcademyToDelete}
+                            onDelete={(acc) => handleDirectDelete(acc)}
                             isActiveMenu={activeMenuId === academy.id}
                             onMenuToggle={setActiveMenuId}
                             menuRef={menuRef}
@@ -130,41 +129,10 @@ export const AdminAcademies: React.FC = () => {
             onRejectDoc={handleRejectDoc}
             onDeleteAcademy={(acc) => {
                 setViewingAcademy(null);
-                setAcademyToDelete(acc);
+                handleDirectDelete(acc);
             }}
             processingId={processingId}
           />
-
-          {academyToDelete && (
-            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-              <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-red-100 dark:border-red-900/20 text-center relative">
-                <button onClick={() => setAcademyToDelete(null)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900" disabled={isDeleting}><X size={24} /></button>
-                <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><AlertTriangle className="text-red-600" size={32} /></div>
-                <h3 className="text-xl font-black dark:text-white mb-2">Confirmar Exclusão</h3>
-                <p className="text-sm text-gray-500 mb-6">Esta ação removerá permanentemente a unidade <strong className="text-red-600">"{academyToDelete.name}"</strong>.</p>
-                <div className="space-y-4">
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900 border rounded-xl text-center font-black tracking-widest text-red-600 uppercase outline-none focus:ring-2 focus:ring-red-500" 
-                    placeholder="ESCREVA EXCLUIR" 
-                    value={deleteConfirmText} 
-                    onChange={(e) => setDeleteConfirmText(e.target.value)} 
-                    disabled={isDeleting} 
-                  />
-                  <div className="flex gap-3">
-                    <button onClick={() => setAcademyToDelete(null)} className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-500 font-black rounded-xl text-xs uppercase" disabled={isDeleting}>Voltar</button>
-                    <button 
-                        onClick={onBeforeConfirmDelete} 
-                        disabled={deleteConfirmText !== 'EXCLUIR' || isDeleting} 
-                        className="flex-1 py-3 bg-red-600 text-white font-black rounded-xl text-xs uppercase shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
-                    >
-                      {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />} Confirmar Exclusão
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {rejectingDoc && (
               <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">

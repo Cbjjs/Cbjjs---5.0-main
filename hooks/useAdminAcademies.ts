@@ -118,14 +118,15 @@ export function useAdminAcademies() {
     }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!academyToDelete || deleteConfirmText !== 'EXCLUIR' || isDeleting) return;
+  const handleConfirmDelete = async (targetAcademy?: AcademyWithProfile) => {
+    const academy = targetAcademy || academyToDelete;
+    if (!academy || isDeleting) return;
+    
     setIsDeleting(true);
     try {
-      await academyService.deleteAcademy(academyToDelete.id);
+      await academyService.deleteAcademy(academy.id);
       addToast('success', "Academia removida permanentemente.");
       setAcademyToDelete(null);
-      setDeleteConfirmText('');
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
     } catch (err: any) {
       addToast('error', err.message);
