@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, RefreshCw, Building, Clock, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Search, RefreshCw, Building, Clock, X, AlertTriangle, Loader2, Trash2 } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
@@ -152,7 +152,7 @@ export const AdminAcademies: React.FC = () => {
                     disabled={isDeleting} 
                   />
                   <div className="flex gap-3">
-                    <button onClick={() => setAcademyToDelete(null)} className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 font-black rounded-xl text-xs uppercase" disabled={isDeleting}>Voltar</button>
+                    <button onClick={() => setAcademyToDelete(null)} className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-500 font-black rounded-xl text-xs uppercase" disabled={isDeleting}>Voltar</button>
                     <button 
                         onClick={onBeforeConfirmDelete} 
                         disabled={deleteConfirmText !== 'EXCLUIR' || isDeleting} 
