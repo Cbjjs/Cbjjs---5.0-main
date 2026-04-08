@@ -14,8 +14,6 @@ import { MyIDCard } from './pages/MyIDCard';
 import { AcademyRegister } from './pages/AcademyRegister';
 import { MyDependents } from './pages/MyDependents';
 import { CustomLoader } from './components/CustomLoader';
-import { DiagnosticLogMonitor } from './components/DiagnosticLogMonitor';
-import { probe } from './utils/diagnosticProbe';
 import { Role } from './types';
 import { WifiOff } from 'lucide-react';
 
@@ -30,16 +28,6 @@ const AppContent: React.FC = () => {
     setCurrentPage(page);
     localStorage.setItem('cbjjs_current_page', page);
   };
-
-  // Lógica de Limpeza de Diagnóstico: Se renderizou com sucesso até aqui, erros de renderização anteriores foram corrigidos.
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-        const timer = setTimeout(() => {
-            probe.resolveRenderErrors();
-        }, 1000);
-        return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, loading, currentPage]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -97,7 +85,6 @@ const AppContent: React.FC = () => {
       <Layout activePage={currentPage} onNavigate={handleNavigate}>
         {renderPage()}
       </Layout>
-      <DiagnosticLogMonitor />
     </div>
   );
 };

@@ -4,8 +4,6 @@ import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../compo
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
 import { useAdminAcademies } from '../hooks/useAdminAcademies';
-import { DiagnosticIntegrityBanner } from '../components/DiagnosticIntegrityBanner';
-import { probe } from '../utils/diagnosticProbe';
 
 export const AdminAcademies: React.FC = () => {
   const {
@@ -23,8 +21,6 @@ export const AdminAcademies: React.FC = () => {
 
   const handleDirectDelete = async (academy: any) => {
       if (confirm(`Deseja realmente excluir permanentemente a unidade "${academy.name}"?`)) {
-          probe.addLog('INFO', `Iniciando exclusão direta: ${academy.name}`);
-          await probe.deepScan('academies', academy.id);
           await handleConfirmDelete(academy.id);
       }
   };
@@ -41,10 +37,6 @@ export const AdminAcademies: React.FC = () => {
 
   return (
       <div className="space-y-6 animate-fadeIn">
-          <div className="fixed top-0 left-0 right-0 z-[100] md:relative md:z-10 md:rounded-t-2xl overflow-hidden">
-             <DiagnosticIntegrityBanner uiCount={academies.length} />
-          </div>
-
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Gestão de Academias</h2>
           
           <div className="flex gap-6 mb-8 border-b border-gray-200 dark:border-gray-800">
