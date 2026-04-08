@@ -40,7 +40,19 @@ export const AdminProfessors: React.FC = () => {
       const to = from + PAGE_SIZE - 1;
 
       let query = supabase.from('profiles').select('*', { count: 'exact' }).in('id', ownerIds);
-      if (searchTerm) query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+      
+      if (searchTerm) {
+          const trimmedSearch = searchTerm.trim();
+          // Verifica se o termo de busca é numérico para incluir a pesquisa por federation_id
+          const isNumeric = /^\d+$/.test(trimmedSearch);
+          
+          if (isNumeric) {
+              const numericId = parseInt(trimmedSearch, 10);
+              query = query.or(`full_name.ilike.%${trimmedSearch}%,email.ilike.%${trimmedSearch}%,federation_id.eq.${numericId}`);
+          } else {
+              query = query.or(`full_name.ilike.%${trimmedSearch}%,email.ilike.%${trimmedSearch}%`);
+          }
+      }
 
       const { data, count, error } = await query.range(from, to).order('full_name').abortSignal(signal);
 
@@ -90,7 +102,13 @@ export const AdminProfessors: React.FC = () => {
 
       <div className="relative w-full">
           <Search className="absolute left-4 top-3 text-gray-400" size={20} />
-          <input type="text" placeholder="Buscar professor..." className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-cbjjs-blue outline-none transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input 
+            type="text" 
+            placeholder="Buscar por nome, email ou número da carteirinha..." 
+            className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-cbjjs-blue outline-none transition-all shadow-sm" 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+          />
       </div>
 
       {loading ? <AdminListSkeleton /> : errorState ? <AdminErrorState onRetry={() => refetch()} /> : (
@@ -107,7 +125,14 @@ export const AdminProfessors: React.FC = () => {
                             {p.profileImage ? <img src={p.profileImage} className="w-full h-full object-cover"/> : p.fullName.substring(0,2).toUpperCase()}
                         </div>
                         <div>
-                            <h4 className="font-bold dark:text-white group-hover:text-cbjjs-blue transition-colors">{p.fullName}</h4>
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-bold dark:text-white group-hover:text-cbjjs-blue transition-colors">{p.fullName}</h4>
+                                {p.federationId && (
+                                    <span className="text-[9px] font-mono font-bold bg-gray-100 dark:bg-slate-700 text-gray-500 px-1.5 py-0.5 rounded">
+                                        ID: {String(p.federationId).padStart(6, '0')}
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
                                 {p.athleteData?.belt ? `Faixa ${p.athleteData.belt}` : 'Professor'} 
                                 {p.academy?.name && ` • ${p.academy.name}`}
