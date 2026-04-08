@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, RefreshCw, Building, Clock, X, Loader2 } from 'lucide-react';
+import { Search, RefreshCw, Building, Clock, X, Loader2, Trash2 } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
