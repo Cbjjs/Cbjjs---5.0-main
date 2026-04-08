@@ -4,6 +4,9 @@ import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../compo
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
 import { useAdminAcademies } from '../hooks/useAdminAcademies';
+import { DiagnosticIntegrityBanner } from '../components/DiagnosticIntegrityBanner';
+import { DiagnosticLogMonitor } from '../components/DiagnosticLogMonitor';
+import { probe } from '../utils/diagnosticProbe';
 
 export const AdminAcademies: React.FC = () => {
   const {
@@ -19,7 +22,15 @@ export const AdminAcademies: React.FC = () => {
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fecha o menu de três pontos ao clicar fora
+  // Intercepta a confirmação de exclusão para diagnóstico
+  const onBeforeConfirmDelete = async () => {
+      if (academyToDelete) {
+          probe.addLog('INFO', `Monitorando tentativa de exclusão da academia: ${academyToDelete.name}`);
+          await probe.deepScan('academies', academyToDelete.id);
+          handleConfirmDelete();
+      }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -32,9 +43,13 @@ export const AdminAcademies: React.FC = () => {
 
   return (
       <div className="space-y-6 animate-fadeIn">
+          {/* BANNER DE INTEGRIDADE (NOVO) */}
+          <div className="fixed top-0 left-0 right-0 z-[100] md:relative md:z-10 md:rounded-t-2xl overflow-hidden">
+             <DiagnosticIntegrityBanner uiCount={academies.length} />
+          </div>
+
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Gestão de Academias</h2>
           
-          {/* Tabs de Filtro */}
           <div className="flex gap-6 mb-8 border-b border-gray-200 dark:border-gray-800">
               <button 
                 onClick={() => setSubTab('approvals')} 
@@ -50,7 +65,6 @@ export const AdminAcademies: React.FC = () => {
               </button>
           </div>
           
-          {/* Barra de Busca e Meta-infos */}
           <div className="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm mb-6 gap-4">
               <div className="relative w-full max-w-lg">
                   <Search className="absolute left-4 top-3 text-gray-400" size={20} />
@@ -70,7 +84,6 @@ export const AdminAcademies: React.FC = () => {
               </div>
           </div>
 
-          {/* Listagem Principal */}
           {isLoading ? (
               <AdminListSkeleton />
           ) : isError ? (
@@ -98,7 +111,6 @@ export const AdminAcademies: React.FC = () => {
               </div>
           )}
           
-          {/* Controles de Paginação */}
           {!isError && !isLoading && totalPages > 1 && (
               <PaginationControls 
                 page={page} 
@@ -108,7 +120,6 @@ export const AdminAcademies: React.FC = () => {
               />
           )}
 
-          {/* Modal de Detalhes e Aprovação */}
           <AdminAcademyDetailsModal 
             isOpen={!!viewingAcademy} 
             onClose={() => setViewingAcademy(null)} 
@@ -124,7 +135,6 @@ export const AdminAcademies: React.FC = () => {
             processingId={processingId}
           />
 
-          {/* Modal de Confirmação de Exclusão */}
           {academyToDelete && (
             <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
               <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-red-100 dark:border-red-900/20 text-center relative">
@@ -144,7 +154,7 @@ export const AdminAcademies: React.FC = () => {
                   <div className="flex gap-3">
                     <button onClick={() => setAcademyToDelete(null)} className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 font-black rounded-xl text-xs uppercase" disabled={isDeleting}>Voltar</button>
                     <button 
-                        onClick={handleConfirmDelete} 
+                        onClick={onBeforeConfirmDelete} 
                         disabled={deleteConfirmText !== 'EXCLUIR' || isDeleting} 
                         className="flex-1 py-3 bg-red-600 text-white font-black rounded-xl text-xs uppercase shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
                     >
@@ -156,7 +166,6 @@ export const AdminAcademies: React.FC = () => {
             </div>
           )}
 
-          {/* Modal de Motivo da Recusa de Documento */}
           {rejectingDoc && (
               <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
                   <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative border dark:border-slate-700">
@@ -165,7 +174,7 @@ export const AdminAcademies: React.FC = () => {
                       </button>
                       <h3 className="text-xl font-black mb-6 dark:text-white uppercase tracking-tight">Motivo da Recusa (Academia)</h3>
                       <textarea 
-                        className="w-full p-4 bg-gray-50 dark:bg-slate-900 border dark:border-slate-700 rounded-2xl mb-6 outline-none focus:ring-2 focus:ring-red-500 dark:text-white shadow-inner" 
+                        className="w-full p-4 bg-gray-50 dark:bg-slate-900 border border-slate-700 rounded-2xl mb-6 outline-none focus:ring-2 focus:ring-red-500 dark:text-white shadow-inner" 
                         rows={4} 
                         value={rejectionReason} 
                         onChange={e => setRejectionReason(e.target.value)} 
@@ -185,6 +194,9 @@ export const AdminAcademies: React.FC = () => {
                   </div>
               </div>
           )}
+
+          {/* MONITOR DE LOGS FLUTUANTE (NOVO) */}
+          <DiagnosticLogMonitor />
       </div>
   );
 };
