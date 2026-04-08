@@ -1,11 +1,13 @@
 import { supabase } from '../lib/supabase';
 
 export type DiagnosticLog = {
+    id: string;
     timestamp: string;
     level: 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
     message: string;
     payload?: any;
     diagnosis?: string;
+    status: 'ACTIVE' | 'RESOLVED' | 'STALE';
 };
 
 const STORAGE_KEY = 'cbjjs_diagnostic_logs';
@@ -15,64 +17,93 @@ class DataBridgeIntegrityProbe {
     private listeners: ((logs: DiagnosticLog[]) => void)[] = [];
 
     constructor() {
-        // Recupera logs anteriores do LocalStorage (Persistência pós-crash)
         if (typeof window !== 'undefined') {
-            try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    this.logs = JSON.parse(saved);
-                }
-            } catch (e) {
-                console.warn("Falha ao recuperar logs do storage", e);
-            }
+            this.loadLogs();
 
-            // Captura automática de erros fatais
+            // Captura erros fatais
             window.onerror = (message, source, lineno, colno, error) => {
-                this.addLog('CRITICAL', `ERRO FATAL (Render): ${message}`, { 
+                this.addLog('CRITICAL', `ERRO: ${message}`, { 
                     source, 
-                    lineno, 
                     stack: error?.stack 
                 });
             };
             
             window.onunhandledrejection = (event) => {
-                this.addLog('ERROR', `Promessa Rejeitada (Async): ${event.reason?.message || event.reason}`, { 
-                    reason: event.reason 
-                });
+                this.addLog('ERROR', `Falha Async: ${event.reason?.message || event.reason}`);
             };
+        }
+    }
+
+    private loadLogs() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                // Ao carregar, marcamos erros antigos como 'STALE' (Instáveis/Antigos)
+                // Eles só reaparecerão se o erro ocorrer novamente na sessão atual
+                const parsed = JSON.parse(saved);
+                this.logs = parsed.map((l: DiagnosticLog) => ({
+                    ...l,
+                    status: l.status === 'RESOLVED' ? 'RESOLVED' : 'STALE'
+                }));
+            }
+        } catch (e) {
+            this.logs = [];
         }
     }
 
     private saveToStorage() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(this.logs));
-        } catch (e) {
-            console.warn("Storage cheio ou inacessível", e);
-        }
+        } catch (e) {}
     }
 
     addLog(level: DiagnosticLog['level'], message: string, payload?: any) {
+        // Deduplicação: se a mensagem for igual, atualizamos o log existente ao invés de criar novo
+        const existingIndex = this.logs.findIndex(l => l.message === message);
+        
         const log: DiagnosticLog = {
+            id: existingIndex >= 0 ? this.logs[existingIndex].id : Math.random().toString(36).substr(2, 9),
             timestamp: new Date().toLocaleString('pt-BR'),
             level,
             message,
             payload,
-            diagnosis: this.diagnose(level, message, payload)
+            diagnosis: this.diagnose(level, message, payload),
+            status: 'ACTIVE'
         };
-        this.logs = [log, ...this.logs].slice(0, 50); // Mantém os últimos 50 eventos
+
+        if (existingIndex >= 0) {
+            this.logs[existingIndex] = log;
+        } else {
+            this.logs = [log, ...this.logs].slice(0, 20); // Limite de 20 logs recentes
+        }
+
         this.saveToStorage();
         this.notify();
-        console.log(`[PROBE][${level}] ${message}`, payload);
+    }
+
+    // Marca erros de renderização como resolvidos (chamado quando a UI carrega com sucesso)
+    resolveRenderErrors() {
+        let changed = false;
+        this.logs = this.logs.map(l => {
+            if (l.level === 'CRITICAL' && l.status !== 'RESOLVED') {
+                changed = true;
+                return { ...l, status: 'RESOLVED' };
+            }
+            return l;
+        });
+        if (changed) {
+            this.saveToStorage();
+            this.notify();
+        }
     }
 
     private diagnose(level: string, message: string, payload: any): string | undefined {
         if (level === 'ERROR' || level === 'CRITICAL') {
             const msg = (message + JSON.stringify(payload)).toLowerCase();
-            if (msg.includes('uuid') || payload?.code === '22p02') return 'Falha de ID: O sistema tentou enviar um ID mal formatado.';
-            if (payload?.code === '42501' || msg.includes('permission denied')) return 'RLS Block: Você não tem permissão no Banco de Dados para excluir esta linha.';
-            if (msg.includes('foreign key') || msg.includes('violates foreign key')) return 'Integridade: Existem ATLETAS vinculados a esta academia. Remova-os primeiro.';
-            if (msg.includes('reading') || msg.includes('undefined') || msg.includes('null')) return 'Crash de Interface: O código tentou ler dados de uma academia que não existe mais no estado da tela.';
-            return 'Erro de Execução Crítico.';
+            if (msg.includes('trash2 is not defined')) return 'Erro de Referência: Ícone Trash2 não foi importado.';
+            if (msg.includes('uuid') || payload?.code === '22p02') return 'ID Inválido enviado ao Banco.';
+            if (msg.includes('permission denied')) return 'Bloqueio de Segurança (RLS).';
+            return 'Falha detectada na execução.';
         }
         return undefined;
     }
@@ -88,24 +119,10 @@ class DataBridgeIntegrityProbe {
     }
 
     async deepScan(entityTable: string, id: string) {
-        this.addLog('INFO', `Varredura Profunda iniciada para ID: ${id}`);
         try {
-            const [direct, raw] = await Promise.all([
-                supabase.from(entityTable).select('id').eq('id', id).maybeSingle(),
-                supabase.from(entityTable).select('*').filter('id', 'eq', id)
-            ]);
-
-            const mismatch = {
-                id_exists: !!direct.data || (raw.data && (raw.data as any).length > 0),
-                raw_data: raw.data
-            };
-
-            this.addLog('INFO', mismatch.id_exists ? 'Registro localizado no DB.' : 'Registro NÃO ENCONTRADO no DB.', mismatch);
-            return mismatch;
-        } catch (err: any) {
-            this.addLog('ERROR', `Falha no Scan: ${err.message}`, err);
-            return null;
-        }
+            const { data } = await supabase.from(entityTable).select('id').eq('id', id).maybeSingle();
+            return { id_exists: !!data };
+        } catch (err) { return null; }
     }
 
     clear() {
