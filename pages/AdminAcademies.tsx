@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, RefreshCw, Building, Clock, X, AlertTriangle, Loader2, Trash2 } from 'lucide-react';
+import { Search, RefreshCw, Building, Clock, X, Loader2 } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
@@ -10,7 +10,7 @@ import { probe } from '../utils/diagnosticProbe';
 export const AdminAcademies: React.FC = () => {
   const {
     academies, totalCount, totalPages, isLoading, isError, subTab, searchTerm, page,
-    viewingAcademy, processingId, academyToDelete, isDeleting,
+    viewingAcademy, processingId, isDeleting,
     rejectingDoc, rejectionReason,
     setSubTab, setSearchTerm, setPage, setViewingAcademy,
     setRejectingDoc, setRejectionReason,
@@ -21,12 +21,11 @@ export const AdminAcademies: React.FC = () => {
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Executa a exclusão direta com diagnóstico integrado
   const handleDirectDelete = async (academy: any) => {
       if (confirm(`Deseja realmente excluir permanentemente a unidade "${academy.name}"?`)) {
           probe.addLog('INFO', `Iniciando exclusão direta: ${academy.name}`);
           await probe.deepScan('academies', academy.id);
-          handleConfirmDelete(academy);
+          await handleConfirmDelete(academy.id);
       }
   };
 
@@ -42,7 +41,6 @@ export const AdminAcademies: React.FC = () => {
 
   return (
       <div className="space-y-6 animate-fadeIn">
-          {/* BANNER DE INTEGRIDADE */}
           <div className="fixed top-0 left-0 right-0 z-[100] md:relative md:z-10 md:rounded-t-2xl overflow-hidden">
              <DiagnosticIntegrityBanner uiCount={academies.length} />
           </div>
@@ -83,7 +81,7 @@ export const AdminAcademies: React.FC = () => {
               </div>
           </div>
 
-          {isLoading ? (
+          {isLoading || isDeleting ? (
               <AdminListSkeleton />
           ) : isError ? (
               <AdminErrorState onRetry={() => refetch()} />

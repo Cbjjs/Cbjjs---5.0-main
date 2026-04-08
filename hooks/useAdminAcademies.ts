@@ -10,23 +10,17 @@ export function useAdminAcademies() {
   const queryClient = useQueryClient();
   const PAGE_SIZE = 10;
 
-  // Estados de Filtro e UI
   const [subTab, setSubTab] = useState<'approvals' | 'all'>('approvals');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [viewingAcademy, setViewingAcademy] = useState<AcademyWithProfile | null>(null);
   
-  // Estados de Ação
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [academyToDelete, setAcademyToDelete] = useState<AcademyWithProfile | null>(null);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Estados para Recusa de Documentos
   const [rejectingDoc, setRejectingDoc] = useState<{ academyId: string, type: string } | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
-  // Busca de Dados via TanStack Query
   const { data: queryData, isLoading, isError, refetch, isFetching } = useSupabaseQuery<{data: AcademyWithProfile[], total: number}>(
     ['admin-academies', subTab, searchTerm, page],
     async (signal) => {
@@ -45,7 +39,6 @@ export function useAdminAcademies() {
   const totalCount = queryData?.data?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  // Handlers de Ação de Documentos
   const handleApproveDoc = async (academyId: string, type: string) => {
     setProcessingId(`${academyId}-${type}`);
     try {
@@ -118,18 +111,16 @@ export function useAdminAcademies() {
     }
   };
 
-  const handleConfirmDelete = async (targetAcademy?: AcademyWithProfile) => {
-    const academy = targetAcademy || academyToDelete;
-    if (!academy || isDeleting) return;
+  const handleConfirmDelete = async (academyId: string) => {
+    if (isDeleting) return;
     
     setIsDeleting(true);
     try {
-      await academyService.deleteAcademy(academy.id);
+      await academyService.deleteAcademy(academyId);
       addToast('success', "Academia removida permanentemente.");
-      setAcademyToDelete(null);
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
     } catch (err: any) {
-      addToast('error', err.message);
+      addToast('error', err.message || "Erro ao excluir. Verifique se existem atletas vinculados.");
     } finally {
       setIsDeleting(false);
     }
@@ -147,8 +138,6 @@ export function useAdminAcademies() {
     page,
     viewingAcademy,
     processingId,
-    academyToDelete,
-    deleteConfirmText,
     isDeleting,
     rejectingDoc,
     rejectionReason,
@@ -156,8 +145,6 @@ export function useAdminAcademies() {
     setSearchTerm: (term: string) => { setSearchTerm(term); setPage(1); },
     setPage,
     setViewingAcademy,
-    setAcademyToDelete,
-    setDeleteConfirmText,
     setRejectingDoc,
     setRejectionReason,
     refetch,
