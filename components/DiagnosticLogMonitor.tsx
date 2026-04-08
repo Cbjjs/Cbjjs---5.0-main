@@ -32,7 +32,6 @@ export const DiagnosticLogMonitor: React.FC = () => {
 
     return (
         <div className={`fixed right-6 bottom-6 z-[9999] w-full max-w-lg bg-slate-950 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-slate-800 flex flex-col transition-all overflow-hidden ${isMinimized ? 'h-14' : 'h-[500px]'}`}>
-            {/* Header */}
             <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Terminal size={18} className="text-blue-400" />

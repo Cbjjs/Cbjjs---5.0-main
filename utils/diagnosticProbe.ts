@@ -51,21 +51,21 @@ class DataBridgeIntegrityProbe {
         const [direct, nested, raw] = await Promise.all([
             // Estratégia 1: Busca Direta
             supabase.from(entityTable).select('id').eq('id', id).maybeSingle(),
-            // Estratégia 2: Busca por Relacionamento (exemplo genérico para academias)
-            supabase.from(entityTable).select('id, profiles(id)').eq('id', id).limit(1),
+            // Estratégia 2: Busca por Relacionamento
+            supabase.from(entityTable).select('id').eq('id', id).limit(1),
             // Estratégia 3: Filtro Bruto (String Casting)
             supabase.from(entityTable).select('*').filter('id', 'eq', id)
         ]);
 
         const mismatch = {
             direct: !!direct.data,
-            nested: !!nested.data && (nested.data as any).length > 0,
+            nested: !!nested.data,
             raw: !!raw.data && (raw.data as any).length > 0,
             dbCount: (raw.data as any)?.length || 0
         };
 
         if (mismatch.dbCount > 0 && !mismatch.direct) {
-            this.addLog('CRITICAL', 'Ponte de Dados Quebrada: Registro existe no banco mas falha na busca direta (Possível erro de Casting UUID).', mismatch);
+            this.addLog('CRITICAL', 'Ponte de Dados Quebrada: Registro existe no banco mas falha na busca direta.', mismatch);
         } else {
             this.addLog('INFO', 'Scan concluído. Registro localizado.', mismatch);
         }

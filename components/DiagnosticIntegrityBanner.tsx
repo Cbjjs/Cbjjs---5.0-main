@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, Activity, Database, Layout } from 'lucide-react';
-import { probe } from '../utils/diagnosticProbe';
 import { supabase } from '../lib/supabase';
 
 export const DiagnosticIntegrityBanner: React.FC<{ uiCount: number }> = ({ uiCount }) => {
-    const [dbStatus, setDbStatus] = useState({ connection: 'Checking', dbCount: 0, healthy: true, role: 'Checking' });
+    const [dbStatus, setDbStatus] = useState({ connection: 'Checking', dbCount: 0, healthy: true });
 
     useEffect(() => {
         const checkStatus = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
             const { count, error } = await supabase.from('academies').select('*', { count: 'exact', head: true });
             
             setDbStatus({
                 connection: error ? 'Disconnected' : 'Online',
                 dbCount: count || 0,
-                healthy: !error && (count === uiCount || uiCount === 0),
-                role: user?.role || 'authenticated'
+                healthy: !error && (count === uiCount || uiCount === 0)
             });
         };
         checkStatus();
