@@ -15,7 +15,7 @@ export const AdminProfessors: React.FC = () => {
   const { data: profsData, isLoading: loading, isError: errorState, refetch } = useSupabaseQuery<User[]>(
     ['admin-professors', searchTerm, page],
     async (signal) => {
-      // 1. Busca todas as academias para mapear os donos
+      // 1. Busca todas as academias para mapear os donos (professores)
       const { data: academiesData } = await supabase
         .from('academies')
         .select('id, name, owner_id, status')
@@ -25,7 +25,7 @@ export const AdminProfessors: React.FC = () => {
 
       if (ownerIds.length === 0) return { data: [], error: null, count: 0 };
 
-      // Criar um mapa de owner_id para lista de academias
+      // Criar um mapa de owner_id para lista de academias para exibição rápida
       const academyMap: Record<string, {id: string, name: string, status: RegistrationStatus}[]> = {};
       academiesData?.forEach(acc => {
           if (!academyMap[acc.owner_id]) academyMap[acc.owner_id] = [];
@@ -43,13 +43,16 @@ export const AdminProfessors: React.FC = () => {
       
       if (searchTerm) {
           const trimmedSearch = searchTerm.trim();
-          // Verifica se o termo de busca é numérico para incluir a pesquisa por federation_id
+          // Verifica se o termo de busca contém apenas números
           const isNumeric = /^\d+$/.test(trimmedSearch);
           
           if (isNumeric) {
+              // Converte para número para remover zeros à esquerda (ex: 000019 vira 19)
               const numericId = parseInt(trimmedSearch, 10);
+              // Busca por Nome, Email ou ID exato da Federação
               query = query.or(`full_name.ilike.%${trimmedSearch}%,email.ilike.%${trimmedSearch}%,federation_id.eq.${numericId}`);
           } else {
+              // Busca normal por texto
               query = query.or(`full_name.ilike.%${trimmedSearch}%,email.ilike.%${trimmedSearch}%`);
           }
       }
@@ -104,19 +107,22 @@ export const AdminProfessors: React.FC = () => {
           <Search className="absolute left-4 top-3 text-gray-400" size={20} />
           <input 
             type="text" 
-            placeholder="Buscar por nome, email ou número da carteirinha..." 
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-cbjjs-blue outline-none transition-all shadow-sm" 
+            placeholder="Buscar por nome, email ou matrícula (ex: 180019)..." 
+            className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-cbjjs-blue outline-none transition-all shadow-sm text-sm" 
             value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+            onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1); // Reseta para a primeira página ao buscar
+            }} 
           />
       </div>
 
       {loading ? <AdminListSkeleton /> : errorState ? <AdminErrorState onRetry={() => refetch()} /> : (
         <div className="grid grid-cols-1 gap-4">
             {professors.length === 0 ? (
-                <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-gray-100">
+                <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-slate-700">
                     <Shield size={48} className="text-gray-200 mx-auto mb-4" />
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Nenhum professor registrado.</p>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Nenhum professor encontrado para esta busca.</p>
                 </div>
             ) : professors.map(p => (
                 <div key={p.id} onClick={() => setViewingProfId(p.id)} className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between group hover:border-cbjjs-blue transition-colors cursor-pointer">
@@ -145,7 +151,14 @@ export const AdminProfessors: React.FC = () => {
         </div>
       )}
 
-      {!loading && !errorState && <PaginationControls page={page} totalPages={Math.ceil(total/PAGE_SIZE)} onPrev={() => setPage(p => Math.max(1, p-1))} onNext={() => setPage(p => p+1)} />}
+      {!loading && !errorState && total > PAGE_SIZE && (
+        <PaginationControls 
+            page={page} 
+            totalPages={Math.ceil(total/PAGE_SIZE)} 
+            onPrev={() => setPage(p => Math.max(1, p-1))} 
+            onNext={() => setPage(p => p+1)} 
+        />
+      )}
 
       <AdminProfessorDetailsModal 
         isOpen={!!viewingProfId}
