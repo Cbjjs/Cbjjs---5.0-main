@@ -14,6 +14,7 @@ import { MyIDCard } from './pages/MyIDCard';
 import { AcademyRegister } from './pages/AcademyRegister';
 import { MyDependents } from './pages/MyDependents';
 import { CustomLoader } from './components/CustomLoader';
+import { DiagnosticLogMonitor } from './components/DiagnosticLogMonitor';
 import { Role } from './types';
 import { RefreshCw, WifiOff } from 'lucide-react';
 
@@ -85,6 +86,8 @@ const AppContent: React.FC = () => {
       <Layout activePage={currentPage} onNavigate={handleNavigate}>
         {renderPage()}
       </Layout>
+      {/* O Monitor fica fora do Layout para não ser destruído por erros nas páginas */}
+      <DiagnosticLogMonitor />
     </div>
   );
 };

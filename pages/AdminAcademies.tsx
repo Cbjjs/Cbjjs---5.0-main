@@ -5,7 +5,6 @@ import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal
 import { AcademyListItem } from '../components/admin/AcademyListItem';
 import { useAdminAcademies } from '../hooks/useAdminAcademies';
 import { DiagnosticIntegrityBanner } from '../components/DiagnosticIntegrityBanner';
-import { DiagnosticLogMonitor } from '../components/DiagnosticLogMonitor';
 import { probe } from '../utils/diagnosticProbe';
 
 export const AdminAcademies: React.FC = () => {
@@ -25,7 +24,8 @@ export const AdminAcademies: React.FC = () => {
   // Intercepta a confirmação de exclusão para diagnóstico
   const onBeforeConfirmDelete = async () => {
       if (academyToDelete) {
-          probe.addLog('INFO', `Monitorando tentativa de exclusão da academia: ${academyToDelete.name}`);
+          probe.addLog('INFO', `Iniciando diagnóstico para exclusão: ${academyToDelete.name}`);
+          // O deepScan agora é mais seguro e loga erros internos
           await probe.deepScan('academies', academyToDelete.id);
           handleConfirmDelete();
       }
@@ -43,7 +43,7 @@ export const AdminAcademies: React.FC = () => {
 
   return (
       <div className="space-y-6 animate-fadeIn">
-          {/* BANNER DE INTEGRIDADE (NOVO) */}
+          {/* BANNER DE INTEGRIDADE */}
           <div className="fixed top-0 left-0 right-0 z-[100] md:relative md:z-10 md:rounded-t-2xl overflow-hidden">
              <DiagnosticIntegrityBanner uiCount={academies.length} />
           </div>
@@ -194,9 +194,6 @@ export const AdminAcademies: React.FC = () => {
                   </div>
               </div>
           )}
-
-          {/* MONITOR DE LOGS FLUTUANTE (NOVO) */}
-          <DiagnosticLogMonitor />
       </div>
   );
 };
