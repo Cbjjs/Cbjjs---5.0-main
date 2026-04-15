@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle, AlertCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { X, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { User, PaymentStatus } from '../../types';
 import { IDCardView } from '../id-card/IDCardView';
 
@@ -15,9 +15,8 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden border dark:border-slate-800 relative animate-fadeIn">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden border dark:border-slate-700 relative animate-fadeIn">
         
-        {/* Botão Fechar Customizado */}
         <button 
             onClick={onClose} 
             className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all z-20"
@@ -31,7 +30,6 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
                 <p className="text-gray-500 text-sm font-medium">Confirme a identidade e o status financeiro do atleta.</p>
             </div>
 
-            {/* Visualização da Carteirinha - Exatamente como no App do Atleta */}
             <div className="w-full flex justify-center mb-10">
                 <IDCardView 
                     fullName={user.fullName}
@@ -45,8 +43,7 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
                 />
             </div>
 
-            {/* Status de Anuidade em Destaque */}
-            <div className="pt-8 border-t dark:border-slate-800">
+            <div className="pt-8 border-t dark:border-slate-700">
                 <div className={`flex flex-col md:flex-row items-center justify-between p-6 rounded-3xl border-2 transition-all
                     ${isPaid 
                         ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800/50' 
@@ -76,7 +73,7 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
                                 : 'bg-red-600 text-white hover:bg-red-700 shadow-red-500/20'}
                         `}
                     >
-                        {isPaid ? 'Liberar Entrada' : 'Acesso Negado'}
+                        {isPaid ? 'Liberar Entrada' : 'Fechar'}
                     </button>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, RefreshCw, Scan, User as UserIcon } from 'lucide-react';
+import { Search, RefreshCw, Scan } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery';
 import { AdminListSkeleton, AdminErrorState, PaginationControls } from '../components/AdminShared';
@@ -25,7 +25,6 @@ export const AdminEventAccess: React.FC = () => {
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      // Busca em Profiles e Dependents simultaneamente
       const [resP, resD] = await Promise.all([
           (isNumeric 
             ? supabase.from('profiles').select('*').eq('federation_id', parseInt(trimmed, 10))
