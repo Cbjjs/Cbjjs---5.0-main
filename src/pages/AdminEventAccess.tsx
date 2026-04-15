@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { Search, RefreshCw, Scan, User as UserIcon, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, RefreshCw, Scan, User as UserIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery';
 import { AdminListSkeleton, AdminErrorState, PaginationControls } from '../components/AdminShared';
 import { athleteService } from '../services/athleteService';
-import { User, RegistrationStatus } from '../types';
+import { User, PaymentStatus } from '../types';
+import { EventAccessModal } from '../components/admin/EventAccessModal';
 
 export const AdminEventAccess: React.FC = () => {
   const PAGE_SIZE = 10;
@@ -12,7 +13,6 @@ export const AdminEventAccess: React.FC = () => {
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Busca de dados combinada (Profiles + Dependents)
   const { data: queryData, isLoading, isError, refetch, isFetching } = useSupabaseQuery<User[]>(
     ['admin-event-access-search', searchTerm, page],
     async (signal) => {
@@ -25,25 +25,16 @@ export const AdminEventAccess: React.FC = () => {
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      // 1. Busca em Profiles
-      let qProfiles = supabase.from('profiles').select('*');
-      if (isNumeric) {
-          qProfiles = qProfiles.eq('federation_id', parseInt(trimmed, 10));
-      } else {
-          qProfiles = qProfiles.ilike('full_name', `%${trimmed}%`);
-      }
-
-      // 2. Busca em Dependents
-      let qDependents = supabase.from('dependents').select('*');
-      if (isNumeric) {
-          qDependents = qDependents.eq('federation_id', parseInt(trimmed, 10));
-      } else {
-          qDependents = qDependents.ilike('full_name', `%${trimmed}%`);
-      }
-
+      // Busca em Profiles e Dependents simultaneamente
       const [resP, resD] = await Promise.all([
-          qProfiles.abortSignal(signal!),
-          qDependents.abortSignal(signal!)
+          (isNumeric 
+            ? supabase.from('profiles').select('*').eq('federation_id', parseInt(trimmed, 10))
+            : supabase.from('profiles').select('*').ilike('full_name', `%${trimmed}%`)
+          ).abortSignal(signal!),
+          (isNumeric 
+            ? supabase.from('dependents').select('*').eq('federation_id', parseInt(trimmed, 10))
+            : supabase.from('dependents').select('*').ilike('full_name', `%${trimmed}%`)
+          ).abortSignal(signal!)
       ]);
 
       if (resP.error) return { data: null, error: resP.error };
@@ -88,12 +79,11 @@ export const AdminEventAccess: React.FC = () => {
         </div>
       </div>
 
-      {/* Barra de Busca - Padrão Gestão de Professores */}
       <div className="relative w-full">
         <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
         <input 
           type="text" 
-          placeholder="Digite o nome ou número de inscrição (Ex: 180019)..." 
+          placeholder="Digite o nome ou número de inscrição (ID)..." 
           className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-cbjjs-blue outline-none transition-all shadow-sm text-sm" 
           value={searchTerm} 
           onChange={(e) => {
@@ -128,7 +118,7 @@ export const AdminEventAccess: React.FC = () => {
                     {user.profileImage ? (
                       <img src={user.profileImage} className="w-full h-full object-cover" alt={user.fullName} />
                     ) : (
-                      user.fullName.substring(0,2).toUpperCase()
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 font-black text-xl">{user.fullName.substring(0,2).toUpperCase()}</div>
                     )}
                   </div>
                   <div>
@@ -148,12 +138,9 @@ export const AdminEventAccess: React.FC = () => {
                 </div>
                 
                 <div className="flex flex-col items-end gap-1">
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${user.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {user.paymentStatus === 'PAID' ? 'Anuidade em Dia' : 'Anuidade Pendente'}
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${user.paymentStatus === PaymentStatus.PAID ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {user.paymentStatus === PaymentStatus.PAID ? 'Anuidade em Dia' : 'Anuidade Pendente'}
                   </span>
-                  {user.isFederationApproved && (
-                    <span className="bg-blue-50 text-cbjjs-blue text-[8px] font-black px-1.5 py-0.5 rounded uppercase border border-blue-100">Federado</span>
-                  )}
                 </div>
               </div>
             ))
@@ -170,7 +157,10 @@ export const AdminEventAccess: React.FC = () => {
         />
       )}
 
-      {/* Modal de detalhes será implementado na Etapa 3 */}
+      <EventAccessModal 
+        user={selectedUser} 
+        onClose={() => setSelectedUser(null)} 
+      />
     </div>
   );
 };
