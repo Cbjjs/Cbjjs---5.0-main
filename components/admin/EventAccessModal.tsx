@@ -16,8 +16,6 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
     const updateScale = () => {
       if (containerRef.current) {
         const availableWidth = containerRef.current.offsetWidth;
-        // 745px é a largura base da IDCardDesktop. 
-        // Adicionamos uma margem de segurança de 40px
         const newScale = Math.min((availableWidth - 40) / 745, 0.9);
         setScale(newScale);
       }
@@ -39,13 +37,9 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
   const isPaid = user.paymentStatus === PaymentStatus.PAID;
 
   return (
-    // Backdrop com z-index ultra alto para sobrepor a sidebar
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-8 bg-black/80 backdrop-blur-md animate-fadeIn">
-      
-      {/* Container Principal do Modal - Limitamos a altura para garantir que caiba no viewport */}
       <div className="bg-white dark:bg-slate-800 w-full max-w-4xl max-h-[92vh] rounded-[2.5rem] shadow-2xl overflow-hidden border dark:border-slate-700 relative flex flex-col shadow-black/50">
         
-        {/* Botão Fechar - Flutuante e sempre visível */}
         <button 
             onClick={onClose} 
             className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all z-50 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20"
@@ -53,17 +47,15 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
             <X size={28}/>
         </button>
 
-        {/* Header - Título Fixo */}
-        <div className="p-8 md:p-10 pb-6 border-b dark:border-slate-700/50 shrink-0">
-            <h3 className="text-2xl font-black dark:text-white tracking-tight leading-none mb-2">Validação de Acesso</h3>
+        {/* Cabeçalho com padding reforçado para evitar cortes laterais */}
+        <div className="px-10 md:px-14 pt-10 pb-8 border-b dark:border-slate-700/50 shrink-0">
+            <h3 className="text-3xl font-black dark:text-white tracking-tight leading-tight mb-2">Validação de Acesso</h3>
             <p className="text-gray-500 text-sm font-medium">Confirme os dados e o status da anuidade.</p>
         </div>
 
-        {/* Área de Conteúdo - Com Rolagem Interna Segura */}
         <div className="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-hide bg-gray-50/30 dark:bg-slate-900/10">
             <div className="flex flex-col items-center max-w-3xl mx-auto">
                 
-                {/* Visualização da Carteirinha com Escala Controlada */}
                 <div ref={containerRef} className="w-full flex justify-center overflow-hidden mb-10 min-h-[220px]">
                     <div 
                         className="relative origin-top transition-transform duration-500 ease-out"
@@ -86,8 +78,7 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
                     </div>
                 </div>
 
-                {/* Status Financeiro - Banner em Destaque */}
-                <div className={`w-full p-6 md:p-8 rounded-[2rem] border-2 transition-all flex flex-col md:flex-row items-center justify-between gap-6 mb-4
+                <div className={`w-full p-6 md:p-8 rounded-[2.5rem] border-2 transition-all flex flex-col md:flex-row items-center justify-between gap-6 mb-4
                     ${isPaid 
                         ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
                         : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'}
@@ -122,7 +113,6 @@ export const EventAccessModal: React.FC<EventAccessModalProps> = ({ user, onClos
             </div>
         </div>
 
-        {/* Rodapé - Fixo */}
         <div className="p-4 bg-gray-50 dark:bg-slate-900/50 text-center border-t dark:border-slate-700 shrink-0">
             <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em]">Confederação Brasileira de Jiu-Jitsu Social • Validação Oficial</p>
         </div>
