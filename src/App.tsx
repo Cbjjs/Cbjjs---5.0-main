@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
+import { IntegrityProvider } from './context/IntegrityContext';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Onboarding } from './pages/Onboarding';
@@ -15,6 +16,8 @@ import { AcademyRegister } from './pages/AcademyRegister';
 import { MyDependents } from './pages/MyDependents';
 import { AdminEventAccess } from './pages/AdminEventAccess';
 import { CustomLoader } from './components/CustomLoader';
+import { IntegrityBanner } from './components/admin/IntegrityBanner';
+import { IntegrityLogMonitor } from './components/admin/IntegrityLogMonitor';
 import { Role } from './types';
 import { WifiOff } from 'lucide-react';
 
@@ -83,10 +86,12 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full flex flex-col">
+      <IntegrityBanner />
       <Layout activePage={currentPage} onNavigate={handleNavigate}>
         {renderPage()}
       </Layout>
+      <IntegrityLogMonitor />
     </div>
   );
 };
@@ -96,7 +101,9 @@ const App: React.FC = () => {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <AppContent />
+          <IntegrityProvider>
+            <AppContent />
+          </IntegrityProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>
