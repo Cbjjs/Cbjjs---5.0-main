@@ -1,18 +1,13 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Search, RefreshCw, Users } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { useAdminAllUsers } from '../hooks/useAdminAllUsers';
 import { UserListItem } from '../components/admin/UserListItem';
 import { UserDetailsModal } from '../components/admin/UserDetailsModal';
-import { IntegrityBanner } from '../components/admin/IntegrityBanner';
-import { IntegrityLogMonitor } from '../components/admin/IntegrityLogMonitor';
-import { integrityService } from '../services/integrityService';
-import { useAuth } from '../context/AuthContext';
 
 export const AdminAllUsers: React.FC = () => {
-  const { user: currentUser, connectionStatus } = useAuth();
   const {
     users, totalCount, totalPages, isLoading, isFetching, isError,
     searchTerm, setSearchTerm, page, setPage,
@@ -20,40 +15,8 @@ export const AdminAllUsers: React.FC = () => {
     isChangingPassword, isDeletingUser, handleUpdatePassword, handleDeleteUser, refetch
   } = useAdminAllUsers();
 
-  const mismatchReport = useMemo(() => {
-    return integrityService.generateMismatchReport(totalCount, users.length);
-  }, [totalCount, users.length]);
-
-  const handleProtectedDelete = async (userId: string) => {
-    // 1. Scan pré-exclusão
-    await integrityService.deepScanEntity(userId, 'profiles');
-    
-    integrityService.traceAction('Chamando Edge Function', { userId });
-    
-    try {
-        // 2. Tenta excluir e captura a resposta real
-        await handleDeleteUser(userId);
-        
-        // 3. Verifica se sumiu (Scan pós-exclusão)
-        const check = await integrityService.deepScanEntity(userId, 'profiles');
-        if (check.results.existsInDB) {
-            integrityService.traceAction('FALHA NA EXCLUSÃO', { userId }, 'CRITICAL');
-        } else {
-            integrityService.traceAction('EXCLUSÃO CONFIRMADA', { userId }, 'SUCCESS');
-        }
-    } catch (err: any) {
-        integrityService.traceAction('ERRO NA REQUISIÇÃO', err, 'CRITICAL');
-    }
-  };
-
   return (
     <div className="space-y-6 animate-fadeIn relative">
-      <IntegrityBanner 
-        report={mismatchReport} 
-        connectionStatus={connectionStatus} 
-        role={currentUser?.role || '---'} 
-      />
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-black dark:text-white tracking-tight">Gestão Global</h2>
@@ -123,10 +86,8 @@ export const AdminAllUsers: React.FC = () => {
         isSubmitting={isChangingPassword}
         isDeleting={isDeletingUser}
         onUpdatePassword={handleUpdatePassword}
-        onDeleteUser={handleProtectedDelete}
+        onDeleteUser={handleDeleteUser}
       />
-
-      <IntegrityLogMonitor />
     </div>
   );
 };
