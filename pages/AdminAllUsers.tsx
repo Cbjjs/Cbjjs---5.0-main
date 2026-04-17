@@ -1,11 +1,18 @@
-import React from 'react';
+"use client";
+
+import React, { useMemo } from 'react';
 import { Search, RefreshCw, Users } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { useAdminAllUsers } from '../hooks/useAdminAllUsers';
 import { UserListItem } from '../components/admin/UserListItem';
 import { UserDetailsModal } from '../components/admin/UserDetailsModal';
+import { IntegrityBanner } from '../components/admin/IntegrityBanner';
+import { IntegrityLogMonitor } from '../components/admin/IntegrityLogMonitor';
+import { integrityService } from '../services/integrityService';
+import { useAuth } from '../context/AuthContext';
 
 export const AdminAllUsers: React.FC = () => {
+  const { user: currentUser, connectionStatus } = useAuth();
   const {
     users, totalCount, totalPages, isLoading, isFetching, isError,
     searchTerm, setSearchTerm, page, setPage,
@@ -13,8 +20,23 @@ export const AdminAllUsers: React.FC = () => {
     isChangingPassword, isDeletingUser, handleUpdatePassword, handleDeleteUser, refetch
   } = useAdminAllUsers();
 
+  const mismatchReport = useMemo(() => {
+    return integrityService.generateMismatchReport(totalCount, users.length);
+  }, [totalCount, users.length]);
+
+  const handleProtectedDelete = async (userId: string) => {
+    await integrityService.deepScanEntity(userId, 'profiles');
+    handleDeleteUser(userId);
+  };
+
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn relative">
+      <IntegrityBanner 
+        report={mismatchReport} 
+        connectionStatus={connectionStatus} 
+        role={currentUser?.role || '---'} 
+      />
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-black dark:text-white tracking-tight">Gestão Global</h2>
@@ -22,7 +44,7 @@ export const AdminAllUsers: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
-             Total: {totalCount}
+             Total no Banco: {totalCount}
           </span>
           <button 
             onClick={() => refetch()} 
@@ -84,8 +106,10 @@ export const AdminAllUsers: React.FC = () => {
         isSubmitting={isChangingPassword}
         isDeleting={isDeletingUser}
         onUpdatePassword={handleUpdatePassword}
-        onDeleteUser={handleDeleteUser}
+        onDeleteUser={handleProtectedDelete}
       />
+
+      <IntegrityLogMonitor />
     </div>
   );
 };
