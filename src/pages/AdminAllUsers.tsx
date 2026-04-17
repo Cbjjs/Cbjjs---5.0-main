@@ -1,18 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo } from 'react';
+import React from 'react';
 import { Search, RefreshCw, Users } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { useAdminAllUsers } from '../hooks/useAdminAllUsers';
 import { UserListItem } from '../components/admin/UserListItem';
 import { UserDetailsModal } from '../components/admin/UserDetailsModal';
-import { IntegrityBanner } from '../components/admin/IntegrityBanner';
-import { IntegrityLogMonitor } from '../components/admin/IntegrityLogMonitor';
-import { integrityService } from '../services/integrityService';
-import { useAuth } from '../context/AuthContext';
 
 export const AdminAllUsers: React.FC = () => {
-  const { user: currentUser, connectionStatus } = useAuth();
   const {
     users, totalCount, totalPages, isLoading, isFetching, isError,
     searchTerm, setSearchTerm, page, setPage,
@@ -20,28 +15,8 @@ export const AdminAllUsers: React.FC = () => {
     isChangingPassword, isDeletingUser, handleUpdatePassword, handleDeleteUser, refetch
   } = useAdminAllUsers();
 
-  // Gera relatório de disparidade entre Banco e UI
-  const mismatchReport = useMemo(() => {
-    return integrityService.generateMismatchReport(totalCount, users.length);
-  }, [totalCount, users.length]);
-
-  // Função de exclusão com sonda de integridade
-  const handleProtectedDelete = async (userId: string) => {
-    // 1. Antes de excluir, varre profundamente para entender o estado do dado
-    await integrityService.deepScanEntity(userId, 'profiles');
-    
-    // 2. Executa a exclusão (que agora será rastreada pelo monitor)
-    handleDeleteUser(userId);
-  };
-
   return (
     <div className="space-y-6 animate-fadeIn relative">
-      <IntegrityBanner 
-        report={mismatchReport} 
-        connectionStatus={connectionStatus} 
-        role={currentUser?.role || '---'} 
-      />
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-black dark:text-white tracking-tight">Gestão Global</h2>
@@ -49,7 +24,7 @@ export const AdminAllUsers: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
-             Total no Banco: {totalCount}
+             Total: {totalCount}
           </span>
           <button 
             onClick={() => refetch()} 
@@ -111,11 +86,8 @@ export const AdminAllUsers: React.FC = () => {
         isSubmitting={isChangingPassword}
         isDeleting={isDeletingUser}
         onUpdatePassword={handleUpdatePassword}
-        onDeleteUser={handleProtectedDelete} // Usando a função protegida
+        onDeleteUser={handleDeleteUser}
       />
-
-      {/* Monitor de Log flutuante disponível apenas para Admin */}
-      <IntegrityLogMonitor />
     </div>
   );
 };
