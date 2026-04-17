@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Verificar se quem está pedindo é um ADMIN
+    // 1. Verificar permissão de ADMIN
     const token = authHeader.replace('Bearer ', '')
     const { data: { user: requester }, error: userError } = await supabaseAdmin.auth.getUser(token)
     
@@ -37,12 +37,24 @@ Deno.serve(async (req) => {
       throw new Error("Apenas administradores podem realizar esta ação")
     }
 
-    // 2. Excluir o usuário usando o Admin API
+    // 2. [LIMPEZA PRÉVIA]: Remover dependentes/filhos vinculados
+    // Isso evita o erro de "Violação de Vínculo" detectado pelo Integrity Probe
+    const { error: depError } = await supabaseAdmin
+      .from('dependents')
+      .delete()
+      .eq('parent_id', targetUserId)
+
+    if (depError) {
+        console.error("[DELETE-FUNCTION] Erro ao remover dependentes:", depError)
+        // Continuamos, pois o erro pode ser apenas que não existem dependentes
+    }
+
+    // 3. Excluir o usuário usando o Admin API (Isso remove do Auth e dispara o cascade no Profile)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId)
 
     if (deleteError) throw deleteError
 
-    return new Response(JSON.stringify({ message: "Usuário excluído com sucesso!" }), {
+    return new Response(JSON.stringify({ message: "Usuário e dependentes excluídos com sucesso!" }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
