@@ -21,10 +21,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Verificar permissão de ADMIN
+    // 1. Verificar se quem pede é um ADMIN
     const token = authHeader.replace('Bearer ', '')
     const { data: { user: requester }, error: userError } = await supabaseAdmin.auth.getUser(token)
-    
     if (userError || !requester) throw new Error("Sessão inválida")
 
     const { data: profile } = await supabaseAdmin
@@ -37,29 +36,36 @@ Deno.serve(async (req) => {
       throw new Error("Apenas administradores podem realizar esta ação")
     }
 
-    // 2. [LIMPEZA PRÉVIA]: Remover dependentes/filhos vinculados
-    // Isso evita o erro de "Violação de Vínculo" detectado pelo Integrity Probe
-    const { error: depError } = await supabaseAdmin
-      .from('dependents')
-      .delete()
-      .eq('parent_id', targetUserId)
+    // 2. LIMPEZA TOTAL EM CASCATA (Ordem de dependência)
+    
+    // a) Remover dependentes/filhos
+    await supabaseAdmin.from('dependents').delete().eq('parent_id', targetUserId);
+    
+    // b) Remover solicitações de alteração de perfil
+    await supabaseAdmin.from('profile_change_requests').delete().eq('user_id', targetUserId);
 
-    if (depError) {
-        console.error("[DELETE-FUNCTION] Erro ao remover dependentes:", depError)
-        // Continuamos, pois o erro pode ser apenas que não existem dependentes
-    }
+    // c) Remover logs de pagamento
+    await supabaseAdmin.from('payment_logs').delete().eq('user_id', targetUserId);
 
-    // 3. Excluir o usuário usando o Admin API (Isso remove do Auth e dispara o cascade no Profile)
+    // d) Remover Academias (se o usuário for professor/dono)
+    // Isso é crucial pois a academia trava a exclusão do perfil do dono
+    await supabaseAdmin.from('academies').delete().eq('owner_id', targetUserId);
+
+    // 3. EXCLUSÃO FINAL NO AUTH (Isso dispara o cascade automático no public.profiles)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId)
 
     if (deleteError) throw deleteError
 
-    return new Response(JSON.stringify({ message: "Usuário e dependentes excluídos com sucesso!" }), {
+    return new Response(JSON.stringify({ 
+        message: "Usuário e todos os dados vinculados foram removidos permanentemente.",
+        cleaned: ["dependents", "academies", "requests", "logs", "auth_user"]
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
   } catch (error) {
+    console.error("[DELETE-FATAL-ERROR]", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
