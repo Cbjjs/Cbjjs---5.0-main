@@ -25,8 +25,25 @@ export const AdminAllUsers: React.FC = () => {
   }, [totalCount, users.length]);
 
   const handleProtectedDelete = async (userId: string) => {
+    // 1. Scan pré-exclusão
     await integrityService.deepScanEntity(userId, 'profiles');
-    handleDeleteUser(userId);
+    
+    integrityService.traceAction('Chamando Edge Function', { userId });
+    
+    try {
+        // 2. Tenta excluir e captura a resposta real
+        await handleDeleteUser(userId);
+        
+        // 3. Verifica se sumiu (Scan pós-exclusão)
+        const check = await integrityService.deepScanEntity(userId, 'profiles');
+        if (check.results.existsInDB) {
+            integrityService.traceAction('FALHA NA EXCLUSÃO', { userId }, 'CRITICAL');
+        } else {
+            integrityService.traceAction('EXCLUSÃO CONFIRMADA', { userId }, 'SUCCESS');
+        }
+    } catch (err: any) {
+        integrityService.traceAction('ERRO NA REQUISIÇÃO', err, 'CRITICAL');
+    }
   };
 
   return (
