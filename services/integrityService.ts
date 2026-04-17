@@ -38,59 +38,66 @@ class IntegrityService {
         return () => { this.listeners = this.listeners.filter(l => l !== callback); };
     }
 
+    /**
+     * Varredura Profunda (Deep Scan)
+     * Acionada no momento da exclusão para detectar a causa da falha.
+     */
     async deepScanEntity(entityId: string, tableName: string) {
-        this.addLog({ type: 'INFO', label: 'Iniciando Deep Scan', payload: { entityId, tableName } });
+        this.addLog({ type: 'INFO', label: 'Iniciando Deep Scan de Exclusão', payload: { entityId, tableName } });
 
         try {
-            const search1 = await supabase.from(tableName).select('*').eq('id', entityId).maybeSingle();
-            const search2 = await supabase.from(tableName).select('*').filter('id', 'eq', entityId);
+            // 1. Busca Direta (UUID)
+            const search1 = await supabase.from(tableName).select('id, full_name, email').eq('id', entityId).maybeSingle();
+            
+            // 2. Busca por Filtro Bruto (String Casting)
+            const search2 = await supabase.from(tableName).select('id').filter('id', 'eq', entityId);
+
+            // 3. Verificação de Vínculos (Dependents)
+            const { data: deps } = await supabase.from('dependents').select('id').eq('parent_id', entityId);
 
             const results = {
-                directMatch: !!search1.data,
-                castMatch: (search2.data?.length || 0) > 0,
-                rlsError: !!search1.error && search1.error.code === '42501',
-                schemaError: !!search1.error && search1.error.code === 'PGRST202'
+                existsInDB: !!search1.data,
+                foundViaStringFilter: (search2.data?.length || 0) > 0,
+                hasActiveDependents: (deps?.length || 0) > 0,
+                rlsError: !!search1.error && (search1.error.code === '42501' || search1.error.status === 403),
+                authSession: !!(await supabase.auth.getSession()).data.session
             };
 
-            let diagnosis = "Integridade OK";
-            let type: 'SUCCESS' | 'CRITICAL' = 'SUCCESS';
+            let diagnosis = "Análise concluída.";
+            let type: 'SUCCESS' | 'WARNING' | 'CRITICAL' = 'SUCCESS';
 
             if (results.rlsError) {
-                diagnosis = "BLOQUEIO RLS: O banco possui o dado, mas sua permissão de Admin não alcança esta linha.";
+                diagnosis = "BLOQUEIO DE PERMISSÃO (RLS): O registro existe, mas sua conta Admin não tem permissão para deletar/ver esta linha específica.";
                 type = 'CRITICAL';
-            } else if (!results.directMatch && results.castMatch) {
-                diagnosis = "FALHA DE CASTING: O dado existe como string, mas falha na busca por UUID.";
+            } else if (results.hasActiveDependents) {
+                diagnosis = "VIOLAÇÃO DE VÍNCULO: O usuário possui filhos/dependentes cadastrados. A exclusão via API falha para proteger a integridade dos filhos.";
                 type = 'CRITICAL';
-            } else if (!results.directMatch) {
-                diagnosis = "DADO INEXISTENTE: O registro não foi encontrado no banco de dados.";
+            } else if (!results.existsInDB && results.foundViaStringFilter) {
+                diagnosis = "ERRO DE CASTING: O ID existe mas o banco não o reconhece como UUID válido na consulta direta.";
+                type = 'CRITICAL';
+            } else if (!results.existsInDB) {
+                diagnosis = "REGISTRO FANTASMA: O usuário aparece na lista mas não foi encontrado no banco (Cache dessincronizado).";
                 type = 'WARNING';
             }
 
             this.addLog({ type, label: 'Resultado do Diagnóstico', payload: results, diagnosis });
             return { results, diagnosis };
         } catch (err: any) {
-            this.addLog({ type: 'CRITICAL', label: 'Erro na Varredura', payload: err });
-            return { diagnosis: "Erro sistêmico durante varredura" };
+            this.addLog({ type: 'CRITICAL', label: 'Falha Técnica no Scan', payload: err });
+            return { diagnosis: "Erro ao tentar diagnosticar a falha." };
         }
     }
 
     generateMismatchReport(dbCount: number, uiCount: number): MismatchReport {
-        const isSync = dbCount === uiCount;
+        // Agora considera paginação (se UI tem 12 e DB tem > 12, está sincronizado)
+        const isSync = dbCount > 0 ? (uiCount > 0) : (uiCount === 0);
+        
         const report: MismatchReport = {
             dbCount,
             uiCount,
             isSync,
-            severity: !isSync && dbCount > 0 && uiCount === 0 ? 'CRITICAL' : (!isSync ? 'HIGH' : 'LOW')
+            severity: (dbCount > 0 && uiCount === 0) ? 'CRITICAL' : 'LOW'
         };
-
-        if (!isSync) {
-            this.addLog({ 
-                type: report.severity === 'CRITICAL' ? 'CRITICAL' : 'WARNING', 
-                label: 'Divergência Detectada', 
-                payload: report,
-                diagnosis: report.severity === 'CRITICAL' ? 'PONTE QUEBRADA: O banco contém dados que o RLS ou Filtros estão escondendo totalmente da UI.' : 'Diferença de contagem entre banco e cache local.'
-            });
-        }
 
         return report;
     }
