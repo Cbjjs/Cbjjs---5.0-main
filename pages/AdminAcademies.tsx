@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, RefreshCw, Building, Clock, X, Loader2, Trash2 } from 'lucide-react';
+import { Search, RefreshCw, Building, Clock, X, Loader2, Trash2, Trash } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
@@ -12,7 +12,7 @@ export const AdminAcademies: React.FC = () => {
     rejectingDoc, rejectionReason,
     setSubTab, setSearchTerm, setPage, setViewingAcademy,
     setRejectingDoc, setRejectionReason,
-    refetch, handleApproveAcademy, handleApproveUpdate, handleConfirmDelete,
+    refetch, handleApproveAcademy, handleApproveUpdate, handleConfirmDelete, handleRestore,
     handleApproveDoc, handleRejectDoc, confirmRejectDoc
   } = useAdminAcademies();
 
@@ -20,7 +20,7 @@ export const AdminAcademies: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleDirectDelete = async (academy: any) => {
-      if (confirm(`Deseja realmente excluir permanentemente a unidade "${academy.name}"?`)) {
+      if (confirm(`Deseja realmente mover a unidade "${academy.name}" para a lixeira?`)) {
           await handleConfirmDelete(academy.id);
       }
   };
@@ -39,24 +39,30 @@ export const AdminAcademies: React.FC = () => {
       <div className="space-y-6 animate-fadeIn">
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Gestão de Academias</h2>
           
-          <div className="flex gap-6 mb-8 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex flex-wrap gap-4 md:gap-6 mb-8 border-b border-gray-200 dark:border-gray-800">
               <button 
                 onClick={() => setSubTab('approvals')} 
-                className={`pb-4 px-2 text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'approvals' ? 'border-cbjjs-blue text-cbjjs-blue' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                className={`pb-4 px-2 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'approvals' ? 'border-cbjjs-blue text-cbjjs-blue' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
               >
                   <Clock size={16} className="mr-2"/> Novas / Atualizações
               </button>
               <button 
                 onClick={() => setSubTab('all')} 
-                className={`pb-4 px-2 text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'all' ? 'border-cbjjs-blue text-cbjjs-blue' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                className={`pb-4 px-2 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'all' ? 'border-cbjjs-blue text-cbjjs-blue' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
               >
-                  <Building size={16} className="mr-2"/> Academias Aprovadas
+                  <Building size={16} className="mr-2"/> Ativas
+              </button>
+              <button 
+                onClick={() => setSubTab('trash')} 
+                className={`pb-4 px-2 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'trash' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                  <Trash size={16} className="mr-2"/> Lixeira
               </button>
           </div>
           
           <div className="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm mb-6 gap-4">
               <div className="relative w-full max-w-lg">
-                  <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+                  <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
                   <input 
                     type="text" 
                     placeholder="Nome da academia..." 
@@ -66,7 +72,7 @@ export const AdminAcademies: React.FC = () => {
                   />
               </div>
               <div className="flex items-center gap-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">Total: {totalCount}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total: {totalCount}</span>
                   <button onClick={() => refetch()} className="text-cbjjs-blue p-2.5 rounded-xl transition-colors hover:bg-gray-100 dark:hover:bg-slate-700">
                     <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
                   </button>
@@ -81,8 +87,8 @@ export const AdminAcademies: React.FC = () => {
               <div className="grid grid-cols-1 gap-4">
                   {academies.length === 0 ? (
                       <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-gray-700">
-                          <Building size={48} className="text-gray-200 mx-auto mb-4" />
-                          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Nenhuma academia encontrada.</p>
+                          <Trash size={48} className="text-gray-200 mx-auto mb-4" />
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Nenhuma academia nesta categoria.</p>
                       </div>
                   ) : (
                       academies.map(academy => (
@@ -91,6 +97,7 @@ export const AdminAcademies: React.FC = () => {
                             academy={academy}
                             onClick={setViewingAcademy}
                             onDelete={(acc) => handleDirectDelete(acc)}
+                            onRestore={(id) => handleRestore(id)}
                             isActiveMenu={activeMenuId === academy.id}
                             onMenuToggle={setActiveMenuId}
                             menuRef={menuRef}
