@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, DocumentStatus, PaymentStatus, RegistrationStatus } from '../types';
 import { supabase } from '../lib/supabase';
-import { Save, RefreshCw, Smartphone, Printer, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Save, RefreshCw, Smartphone, Printer, MessageCircle, AlertTriangle, X, Loader2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { PaymentModal } from '../components/PaymentModal';
 import { PaymentInviteModal, PaymentPlanOption } from '../components/PaymentInviteModal';
@@ -28,6 +28,10 @@ export const Profile: React.FC = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+
+  // Estados para troca rápida de academia
+  const [isAcademyModalOpen, setIsAcademyModalOpen] = useState(false);
+  const [tempAcademyId, setTempAcademyId] = useState<string | undefined>(undefined);
   
   const [availablePlans, setAvailablePlans] = useState<PaymentPlanOption[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlanOption | null>(null);
@@ -134,6 +138,25 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const handleSaveAcademyOnly = async () => {
+    if (!tempAcademyId || tempAcademyId === user.academyId) {
+        setIsAcademyModalOpen(false);
+        return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+        await updateUser({ academyId: tempAcademyId });
+        addToast('success', "Academia alterada! Aguarde a aprovação do novo professor.");
+        setIsAcademyModalOpen(false);
+        await refreshProfile();
+    } catch (error: any) {
+        addToast('error', error.message);
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
   const handleManualPaymentCheck = async () => {
       setIsCheckingPayment(true);
       try {
@@ -225,17 +248,29 @@ export const Profile: React.FC = () => {
 
       {/* AVISO DE ACADEMIA PENDENTE */}
       {!isAcademyApproved && user.academyId && (
-          <div className="p-5 bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 rounded-2xl flex items-start gap-4 animate-fadeIn shadow-sm">
-              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-amber-600">
-                  <AlertTriangle size={24} />
+          <div className="p-5 bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 rounded-2xl flex flex-col gap-4 animate-fadeIn shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-amber-600">
+                    <AlertTriangle size={24} />
+                </div>
+                <div>
+                    <h4 className="font-black text-amber-800 dark:text-amber-200 uppercase text-xs tracking-widest mb-1">Aguardando Professor</h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
+                        Você vinculou seu perfil à unidade <span className="font-bold">"{user.academy?.name}"</span>. 
+                        O professor responsável precisa aprovar sua entrada para que sua filiação seja validada.
+                    </p>
+                </div>
               </div>
-              <div>
-                  <h4 className="font-black text-amber-800 dark:text-amber-200 uppercase text-xs tracking-widest mb-1">Aguardando Professor</h4>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
-                      Você vinculou seu perfil à unidade <span className="font-bold">"{user.academy?.name}"</span>. 
-                      O professor responsável precisa aprovar sua entrada para que sua filiação seja validada.
-                  </p>
-              </div>
+
+              <button 
+                onClick={() => {
+                    setTempAcademyId(user.academyId);
+                    setIsAcademyModalOpen(true);
+                }}
+                className="w-fit px-5 py-2.5 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 active:scale-95"
+              >
+                  Deseja alterar academia?
+              </button>
           </div>
       )}
 
@@ -304,6 +339,42 @@ export const Profile: React.FC = () => {
       />
 
       <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} pixId={paymentData.pixId} pixCode={paymentData.pixCode} qrCodeBase64={paymentData.qrCodeBase64} amount={paymentData.amount} onSuccess={() => refreshProfile()} />
+
+      {/* MODAL ALTERAR ACADEMIA */}
+      {isAcademyModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border dark:border-slate-700">
+            <div className="p-8 border-b dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
+              <h2 className="text-2xl font-black dark:text-white tracking-tighter">Alterar Academia</h2>
+              <button 
+                onClick={() => setIsAcademyModalOpen(false)} 
+                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <X size={28}/>
+              </button>
+            </div>
+            <div className="p-8">
+              <AcademySection 
+                user={user}
+                isEditing={true}
+                selectedAcademyId={tempAcademyId}
+                onAcademyChange={(id) => setTempAcademyId(id)}
+              />
+              <button 
+                onClick={handleSaveAcademyOnly}
+                disabled={isSubmitting || !tempAcademyId || tempAcademyId === user.academyId}
+                className="w-full mt-8 bg-cbjjs-blue text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" size={20}/> : <Save size={20}/>}
+                Confirmar Troca de Unidade
+              </button>
+              <p className="mt-4 text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest">
+                Seu cadastro voltará para aprovação do novo professor.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
