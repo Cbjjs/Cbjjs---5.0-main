@@ -22,7 +22,7 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
       onClick={() => onClick(academy)}
       className={`p-5 rounded-3xl shadow-sm border flex items-center justify-between group transition-all relative cursor-pointer
         ${isDeleted 
-            ? 'bg-red-50/30 border-red-100 dark:bg-red-900/5 dark:border-red-900/20' 
+            ? 'bg-red-50/30 border-red-100 dark:bg-red-900/5 dark:border-red-900/20 grayscale-[0.2]' 
             : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:border-cbjjs-blue'}
       `}
     >
@@ -55,7 +55,7 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
             e.stopPropagation();
             onMenuToggle(isActiveMenu ? null : academy.id);
           }}
-          className="p-3 text-gray-400 hover:text-cbjjs-blue hover:bg-gray-50 rounded-xl transition-all"
+          className="p-3 text-gray-400 hover:text-cbjjs-blue hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl transition-all"
         >
           <MoreVertical size={24} />
         </button>
@@ -72,14 +72,14 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
             {isDeleted ? (
                 <button 
                   onClick={(e) => { e.stopPropagation(); onRestore?.(academy.id); onMenuToggle(null); }}
-                  className="w-full text-left px-4 py-3 text-sm font-bold text-cbjjs-blue hover:bg-blue-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-3 text-sm font-bold text-cbjjs-blue hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2"
                 >
                   <RotateCcw size={16} /> Restaurar Unidade
                 </button>
             ) : (
                 <button 
                   onClick={(e) => { e.stopPropagation(); onDelete(academy); onMenuToggle(null); }}
-                  className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                 >
                   <Trash2 size={16} /> Mover para Lixeira
                 </button>
