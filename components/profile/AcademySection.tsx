@@ -25,9 +25,11 @@ export const AcademySection: React.FC<AcademySectionProps> = ({
     if (!isEditing) return;
     setLoadingAcademies(true);
     try {
+      // FILTRO ADICIONADO: .eq('deleted', 'no')
       let query = supabase.from('academies')
         .select('*')
         .eq('status', 'APPROVED')
+        .eq('deleted', 'no') 
         .order('name', { ascending: true })
         .limit(20);
       
