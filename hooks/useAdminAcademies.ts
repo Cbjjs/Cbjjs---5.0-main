@@ -43,14 +43,8 @@ export function useAdminAcademies() {
     setProcessingId(`${academyId}-${type}`);
     try {
       await academyService.updateAcademyDocumentStatus(academyId, type, DocumentStatus.APPROVED);
-      addToast('success', "Documento da academia aprovado!");
+      addToast('success', "Documento aprovado!");
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
-      
-      if (viewingAcademy && viewingAcademy.id === academyId) {
-        const updated = { ...viewingAcademy };
-        (updated as any)[type].status = DocumentStatus.APPROVED;
-        setViewingAcademy(updated);
-      }
     } catch (err: any) {
       addToast('error', err.message);
     } finally {
@@ -82,26 +76,10 @@ export function useAdminAcademies() {
   };
 
   const handleApproveAcademy = async (academyId: string) => {
-    if (processingId) return;
     setProcessingId(academyId);
     try {
       await academyService.approveAcademy(academyId);
-      addToast('success', "Academia aprovada com sucesso!");
-      setViewingAcademy(null);
-      queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
-    } catch (err: any) {
-      addToast('error', err.message);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleApproveUpdate = async (requestId: string, academyId: string, newData: any) => {
-    if (processingId) return;
-    setProcessingId(requestId);
-    try {
-      await academyService.approveAcademyUpdate(requestId, academyId, newData);
-      addToast('success', "Alterações de dados aplicadas!");
+      addToast('success', "Academia aprovada!");
       setViewingAcademy(null);
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
     } catch (err: any) {
@@ -112,15 +90,13 @@ export function useAdminAcademies() {
   };
 
   const handleConfirmDelete = async (academyId: string) => {
-    if (isDeleting) return;
-    
     setIsDeleting(true);
     try {
       await academyService.deleteAcademy(academyId);
-      addToast('success', "Academia movida para a lixeira.");
+      addToast('success', "Unidade movida para a lixeira.");
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
     } catch (err: any) {
-      addToast('error', err.message || "Erro ao mover para lixeira.");
+      addToast('error', err.message);
     } finally {
       setIsDeleting(false);
     }
@@ -130,7 +106,7 @@ export function useAdminAcademies() {
     setProcessingId(`restore-${academyId}`);
     try {
       await academyService.restoreAcademy(academyId);
-      addToast('success', "Unidade restaurada com sucesso!");
+      addToast('success', "Unidade restaurada!");
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
       setViewingAcademy(null);
     } catch (err: any) {
@@ -141,33 +117,13 @@ export function useAdminAcademies() {
   };
 
   return {
-    academies,
-    totalCount,
-    totalPages,
-    isLoading,
-    isFetching,
-    isError,
-    subTab,
-    searchTerm,
-    page,
-    viewingAcademy,
-    processingId,
-    isDeleting,
-    rejectingDoc,
-    rejectionReason,
-    setSubTab: (tab: 'approvals' | 'all' | 'trash') => { setSubTab(tab); setPage(1); },
+    academies, totalCount, totalPages, isLoading, isFetching, isError,
+    subTab, searchTerm, page, viewingAcademy, processingId, isDeleting,
+    rejectingDoc, rejectionReason,
+    setSubTab: (tab: any) => { setSubTab(tab); setPage(1); },
     setSearchTerm: (term: string) => { setSearchTerm(term); setPage(1); },
-    setPage,
-    setViewingAcademy,
-    setRejectingDoc,
-    setRejectionReason,
-    refetch,
-    handleApproveAcademy,
-    handleApproveUpdate,
-    handleConfirmDelete,
-    handleRestore,
-    handleApproveDoc,
-    handleRejectDoc,
-    confirmRejectDoc
+    setPage, setViewingAcademy, setRejectingDoc, setRejectionReason,
+    refetch, handleApproveAcademy, handleConfirmDelete, handleRestore,
+    handleApproveDoc, handleRejectDoc, confirmRejectDoc
   };
 }

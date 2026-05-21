@@ -19,7 +19,7 @@ export const academyService = {
         .from('academies')
         .select('*')
         .eq('owner_id', userId)
-        .eq('deleted', 'no') // Apenas ativas para o professor
+        .eq('deleted', 'no') 
         .order('created_at', { ascending: false })
         .abortSignal(signal!);
 
@@ -116,25 +116,13 @@ export const academyService = {
         query = query.ilike('name', `%${searchTerm}%`);
     }
 
-    // Filtro de Lixeira
     if (subTab === 'trash') {
         query = query.eq('deleted', 'yes');
     } else {
         query = query.eq('deleted', 'no');
         
         if (subTab === 'approvals') {
-            const { data: reqData } = await supabase
-                .from('academy_change_requests')
-                .select('academy_id')
-                .eq('status', 'PENDING');
-                
-            const pendingIds = reqData?.map(r => r.academy_id) || [];
-            
-            if (pendingIds.length > 0) {
-                query = query.or(`status.eq.PENDING,id.in.(${pendingIds.join(',')})`);
-            } else {
-                query = query.eq('status', 'PENDING');
-            }
+            query = query.eq('status', 'PENDING');
         } else {
             query = query.eq('status', 'APPROVED');
         }
@@ -146,16 +134,8 @@ export const academyService = {
 
     if (error) throw error;
 
-    const academyIds = data?.map(a => a.id) || [];
-    const { data: reqs } = await supabase
-        .from('academy_change_requests')
-        .select('*')
-        .in('academy_id', academyIds)
-        .eq('status', 'PENDING');
-
     const mapped: AcademyWithProfile[] = data?.map((a: any) => {
         const profile = Array.isArray(a.owner_profile) ? a.owner_profile[0] : a.owner_profile;
-        const pending = reqs?.find(r => r.academy_id === a.id);
         
         return {
             id: a.id,
@@ -183,14 +163,6 @@ export const academyService = {
                 email: profile.email, 
                 dob: profile.dob, 
                 cpf: profile.cpf 
-            } : undefined,
-            pendingChangeRequest: pending ? {
-                id: pending.id,
-                academyId: pending.academy_id,
-                oldData: pending.old_data,
-                newData: pending.new_data,
-                status: pending.status as any,
-                createdAt: pending.created_at
             } : undefined
         };
     }) || [];
@@ -229,36 +201,16 @@ export const academyService = {
     return true;
   },
 
-  async approveAcademyUpdate(requestId: string, academyId: string, newData: any) {
-    const { error: updateError } = await supabase
-        .from('academies')
-        .update(newData)
-        .eq('id', academyId);
-    
-    if (updateError) throw updateError;
-
-    const { error: reqError } = await supabase
-        .from('academy_change_requests')
-        .update({ status: 'APPROVED' })
-        .eq('id', requestId);
-    
-    if (reqError) throw reqError;
-    
-    return true;
-  },
-
-  // EXCLUSÃO LÓGICA (SOFT DELETE)
   async deleteAcademy(academyId: string) {
     const { error } = await supabase
         .from('academies')
-        .update({ deleted: 'yes' }) // Muda para 'yes' em vez de deletar a linha
+        .update({ deleted: 'yes' })
         .eq('id', academyId);
     
     if (error) throw error;
     return true;
   },
 
-  // RESTAURAR DA LIXEIRA
   async restoreAcademy(academyId: string) {
     const { error } = await supabase
         .from('academies')
