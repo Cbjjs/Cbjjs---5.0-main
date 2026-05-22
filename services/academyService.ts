@@ -246,10 +246,19 @@ export const academyService = {
   },
 
   async deleteAcademy(academyId: string) {
-    // ALTERAÇÃO SOLICITADA: Soft Delete em vez de remoção física
     const { error } = await supabase
         .from('academies')
         .update({ deleted: 'yes' })
+        .eq('id', academyId);
+    
+    if (error) throw error;
+    return true;
+  },
+
+  async restoreAcademy(academyId: string) {
+    const { error } = await supabase
+        .from('academies')
+        .update({ deleted: 'no' })
         .eq('id', academyId);
     
     if (error) throw error;

@@ -126,6 +126,19 @@ export function useAdminAcademies() {
     }
   };
 
+  const handleRestoreAcademy = async (academyId: string) => {
+    setProcessingId(academyId);
+    try {
+      await academyService.restoreAcademy(academyId);
+      addToast('success', "Academia restaurada com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
+    } catch (err: any) {
+      addToast('error', err.message);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   return {
     academies,
     totalCount,
@@ -151,6 +164,7 @@ export function useAdminAcademies() {
     handleApproveAcademy,
     handleApproveUpdate,
     handleConfirmDelete,
+    handleRestoreAcademy,
     handleApproveDoc,
     handleRejectDoc,
     confirmRejectDoc

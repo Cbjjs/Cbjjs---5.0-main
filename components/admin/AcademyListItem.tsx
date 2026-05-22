@@ -1,19 +1,22 @@
 import React from 'react';
-import { MoreVertical, Eye, Trash2 } from 'lucide-react';
+import { MoreVertical, Eye, Trash2, RotateCcw } from 'lucide-react';
 import { AcademyWithProfile } from '../../services/academyService';
 
 interface AcademyListItemProps {
   academy: AcademyWithProfile;
   onClick: (academy: AcademyWithProfile) => void;
   onDelete: (academy: AcademyWithProfile) => void;
+  onRestore?: (id: string) => void;
   isActiveMenu: boolean;
   onMenuToggle: (id: string | null) => void;
   menuRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const AcademyListItem: React.FC<AcademyListItemProps> = ({ 
-  academy, onClick, onDelete, isActiveMenu, onMenuToggle, menuRef 
+  academy, onClick, onDelete, onRestore, isActiveMenu, onMenuToggle, menuRef 
 }) => {
+  const isDeleted = academy.deleted === 'yes';
+
   return (
     <div 
       onClick={() => onClick(academy)}
@@ -66,13 +69,24 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
             >
               <Eye size={16} /> Ver Detalhes
             </button>
+            
             <div className="h-px bg-gray-100 dark:bg-slate-700 my-1 mx-2"></div>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onDelete(academy); onMenuToggle(null); }}
-              className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
-            >
-              <Trash2 size={16} /> Excluir Unidade
-            </button>
+            
+            {isDeleted ? (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onRestore?.(academy.id); onMenuToggle(null); }}
+                className="w-full text-left px-4 py-3 text-sm font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-colors"
+              >
+                <RotateCcw size={16} /> Restaurar Unidade
+              </button>
+            ) : (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDelete(academy); onMenuToggle(null); }}
+                className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+              >
+                <Trash2 size={16} /> Excluir Unidade
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -14,7 +14,7 @@ export const AdminAcademies: React.FC = () => {
     setSubTab, setSearchTerm, setPage, setViewingAcademy,
     setRejectingDoc, setRejectionReason,
     refetch, handleApproveAcademy, handleApproveUpdate, handleConfirmDelete,
-    handleApproveDoc, handleRejectDoc, confirmRejectDoc
+    handleRestoreAcademy, handleApproveDoc, handleRejectDoc, confirmRejectDoc
   } = useAdminAcademies();
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -104,6 +104,7 @@ export const AdminAcademies: React.FC = () => {
                             academy={academy}
                             onClick={setViewingAcademy}
                             onDelete={(acc) => handleDirectDelete(acc)}
+                            onRestore={(id) => handleRestoreAcademy(id)}
                             isActiveMenu={activeMenuId === academy.id}
                             onMenuToggle={setActiveMenuId}
                             menuRef={menuRef}
