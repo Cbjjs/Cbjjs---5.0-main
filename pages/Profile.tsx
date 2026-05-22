@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, DocumentStatus, PaymentStatus, RegistrationStatus } from '../types';
 import { supabase } from '../lib/supabase';
-import { Save, RefreshCw, Smartphone, Printer, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Save, RefreshCw, Smartphone, Printer, MessageCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { PaymentModal } from '../components/PaymentModal';
 import { PaymentInviteModal, PaymentPlanOption } from '../components/PaymentInviteModal';
@@ -15,6 +15,7 @@ import { FederationStatusSection } from '../components/profile/FederationStatusS
 import { DocumentsSection } from '../components/profile/DocumentsSection';
 import { PersonalInfoSection } from '../components/profile/PersonalInfoSection';
 import { AcademySection } from '../components/profile/AcademySection';
+import { ChangeAcademyModal } from '../components/profile/ChangeAcademyModal';
 
 export const Profile: React.FC = () => {
   const { user, updateUser, refreshProfile } = useAuth();
@@ -28,6 +29,7 @@ export const Profile: React.FC = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [isChangeAcademyModalOpen, setIsChangeAcademyModalOpen] = useState(false);
   
   const [availablePlans, setAvailablePlans] = useState<PaymentPlanOption[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlanOption | null>(null);
@@ -120,7 +122,6 @@ export const Profile: React.FC = () => {
         
         if (wasAcademyChanged) {
             addToast('success', "Academia alterada! Seu perfil agora aguarda aprovação do novo professor.");
-            // Força o fechamento da edição e atualização dos dados locais
             setIsEditing(false);
             await refreshProfile();
         } else {
@@ -132,6 +133,20 @@ export const Profile: React.FC = () => {
     } finally { 
         setIsSubmitting(false); 
     }
+  };
+
+  const handleQuickAcademyChange = async (academyId: string, academyName: string) => {
+      setIsSubmitting(true);
+      try {
+          await updateUser({ academyId });
+          addToast('success', `Unidade alterada para "${academyName}" com sucesso!`);
+          setIsChangeAcademyModalOpen(false);
+          await refreshProfile();
+      } catch (error: any) {
+          addToast('error', error.message || "Erro ao trocar academia.");
+      } finally {
+          setIsSubmitting(false);
+      }
   };
 
   const handleManualPaymentCheck = async () => {
@@ -229,12 +244,19 @@ export const Profile: React.FC = () => {
               <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-amber-600">
                   <AlertTriangle size={24} />
               </div>
-              <div>
+              <div className="flex-1">
                   <h4 className="font-black text-amber-800 dark:text-amber-200 uppercase text-xs tracking-widest mb-1">Aguardando Professor</h4>
                   <p className="text-sm text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
                       Você vinculou seu perfil à unidade <span className="font-bold">"{user.academy?.name}"</span>. 
                       O professor responsável precisa aprovar sua entrada para que sua filiação seja validada.
                   </p>
+                  <button 
+                    onClick={() => setIsChangeAcademyModalOpen(true)}
+                    className="mt-3 text-xs font-black text-cbjjs-blue hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 uppercase tracking-widest flex items-center gap-1.5 transition-all group"
+                  >
+                      Deseja alterar academia? 
+                      <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
               </div>
           </div>
       )}
@@ -292,6 +314,14 @@ export const Profile: React.FC = () => {
             </div>
           </a>
       )}
+
+      <ChangeAcademyModal 
+        isOpen={isChangeAcademyModalOpen}
+        onClose={() => setIsChangeAcademyModalOpen(false)}
+        currentAcademyName={user.academy?.name}
+        onConfirm={handleQuickAcademyChange}
+        isSubmitting={isSubmitting}
+      />
 
       <PaymentInviteModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} onPay={onInvitePay} isLoading={false} availablePlans={availablePlans} />
       
