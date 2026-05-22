@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Search, RefreshCw, Building, Clock, X, Loader2, Trash2 } from 'lucide-react';
 import { AdminListSkeleton, PaginationControls, AdminErrorState } from '../components/AdminShared';
 import { AdminAcademyDetailsModal } from '../components/AdminAcademyDetailsModal';
 import { AcademyListItem } from '../components/admin/AcademyListItem';
 import { useAdminAcademies } from '../hooks/useAdminAcademies';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export const AdminAcademies: React.FC = () => {
   const {
@@ -16,12 +17,18 @@ export const AdminAcademies: React.FC = () => {
     handleApproveDoc, handleRejectDoc, confirmRejectDoc
   } = useAdminAcademies();
 
-  const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [academyToDelete, setAcademyToDelete] = useState<any | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleDirectDelete = async (academy: any) => {
-      if (confirm(`Deseja enviar a unidade "${academy.name}" para a lixeira? Ela deixará de ser visível para novos alunos.`)) {
-          await handleConfirmDelete(academy.id);
+  const handleDirectDelete = (academy: any) => {
+      setAcademyToDelete(academy);
+  };
+
+  const confirmDelete = async () => {
+      if (academyToDelete) {
+          await handleConfirmDelete(academyToDelete.id);
+          setAcademyToDelete(null);
       }
   };
 
@@ -128,6 +135,18 @@ export const AdminAcademies: React.FC = () => {
                 handleDirectDelete(acc);
             }}
             processingId={processingId}
+          />
+
+          <ConfirmationModal 
+            isOpen={!!academyToDelete}
+            onClose={() => setAcademyToDelete(null)}
+            onConfirm={confirmDelete}
+            title="Enviar para Lixeira?"
+            message={`Deseja enviar a unidade "${academyToDelete?.name}" para a lixeira? Ela deixará de ser visível para novos alunos.`}
+            confirmText="Sim, Enviar"
+            cancelText="Cancelar"
+            variant="danger"
+            isLoading={isDeleting}
           />
 
           {rejectingDoc && (
