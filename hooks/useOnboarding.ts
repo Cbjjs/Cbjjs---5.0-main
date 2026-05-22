@@ -25,7 +25,7 @@ export function useOnboarding() {
   const [formData, setFormData] = useState({
     nationality: 'Brasil',
     cpf: '',
-    dob: user?.dob || '', 
+    dob: user?.dob || '', // CORREÇÃO: Inicializa com a data do usuário se existir
     gender: 'Masculino',
     zip: '',
     street: '',
@@ -43,14 +43,7 @@ export function useOnboarding() {
     try {
         const from = reset ? 0 : page * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
-        // FILTRO ADICIONADO: .eq('deleted', 'no')
-        let query = supabase.from('academies')
-            .select('*')
-            .eq('status', 'APPROVED')
-            .eq('deleted', 'no') 
-            .range(from, to)
-            .order('name', { ascending: true });
-            
+        let query = supabase.from('academies').select('*').eq('status', 'APPROVED').range(from, to).order('name', { ascending: true });
         if (searchTerm) query = query.ilike('name', `%${searchTerm}%`);
         const { data, error } = await query;
         if (error) throw error;

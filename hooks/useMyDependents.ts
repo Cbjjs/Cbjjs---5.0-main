@@ -67,13 +67,7 @@ export function useMyDependents() {
     const fetchAcademies = useCallback(async () => {
         setLoadingAcademies(true);
         try {
-            // FILTRO ADICIONADO: .eq('deleted', 'no')
-            let query = supabase.from('academies')
-                .select('*')
-                .eq('status', 'APPROVED')
-                .eq('deleted', 'no') 
-                .order('name', { ascending: true });
-                
+            let query = supabase.from('academies').select('*').eq('status', 'APPROVED').order('name', { ascending: true });
             if (searchTerm) query = query.ilike('name', `%${searchTerm}%`);
             const { data, error } = await query;
             if (error) throw error;
