@@ -202,5 +202,6 @@ export interface Academy {
   blackBeltCertificate?: UserDocument;
   identityDocument?: UserDocument;
   status: RegistrationStatus;
+  deleted?: string;
   pendingChangeRequest?: AcademyChangeRequest;
 }

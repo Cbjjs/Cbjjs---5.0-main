@@ -20,7 +20,7 @@ export const AdminAcademies: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleDirectDelete = async (academy: any) => {
-      if (confirm(`Deseja realmente excluir permanentemente a unidade "${academy.name}"?`)) {
+      if (confirm(`Deseja enviar a unidade "${academy.name}" para a lixeira? Ela deixará de ser visível para novos alunos.`)) {
           await handleConfirmDelete(academy.id);
       }
   };
@@ -51,6 +51,12 @@ export const AdminAcademies: React.FC = () => {
                 className={`pb-4 px-2 text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'all' ? 'border-cbjjs-blue text-cbjjs-blue' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
               >
                   <Building size={16} className="mr-2"/> Academias Aprovadas
+              </button>
+              <button 
+                onClick={() => setSubTab('trash')} 
+                className={`pb-4 px-2 text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${subTab === 'trash' ? 'border-cbjjs-blue text-cbjjs-blue' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                  <Trash2 size={16} className="mr-2"/> Lixeira
               </button>
           </div>
           

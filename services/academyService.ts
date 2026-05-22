@@ -18,6 +18,7 @@ export const academyService = {
         .from('academies')
         .select('*')
         .eq('owner_id', userId)
+        .eq('deleted', 'no') // Não mostra deletadas para o professor
         .order('created_at', { ascending: false })
         .abortSignal(signal!);
 
@@ -33,6 +34,7 @@ export const academyService = {
         phone: acc.phone,
         address: acc.address, 
         status: acc.status as RegistrationStatus,
+        deleted: acc.deleted,
         blackBeltCertificate: { 
             status: acc.doc_certificate_status || (acc.certificate_url ? DocumentStatus.PENDING : DocumentStatus.MISSING), 
             url: acc.certificate_url,
@@ -62,7 +64,8 @@ export const academyService = {
             number: data.number, 
             complement: data.complement 
         },
-        status: 'PENDING'
+        status: 'PENDING',
+        deleted: 'no'
     };
 
     const { data: result, error } = await supabase.from('academies').insert(academyData).select().single();
@@ -95,7 +98,7 @@ export const academyService = {
   // --- MÉTODOS DO ADMIN ---
 
   async getAdminAcademies(params: { 
-    subTab: 'approvals' | 'all', 
+    subTab: 'approvals' | 'all' | 'trash', 
     searchTerm: string, 
     page: number, 
     pageSize: number 
@@ -112,21 +115,27 @@ export const academyService = {
         query = query.ilike('name', `%${searchTerm}%`);
     }
 
-    if (subTab === 'approvals') {
-        const { data: reqData } = await supabase
-            .from('academy_change_requests')
-            .select('academy_id')
-            .eq('status', 'PENDING');
-            
-        const pendingIds = reqData?.map(r => r.academy_id) || [];
-        
-        if (pendingIds.length > 0) {
-            query = query.or(`status.eq.PENDING,id.in.(${pendingIds.join(',')})`);
-        } else {
-            query = query.eq('status', 'PENDING');
-        }
+    if (subTab === 'trash') {
+        query = query.eq('deleted', 'yes');
     } else {
-        query = query.eq('status', 'APPROVED');
+        query = query.eq('deleted', 'no');
+        
+        if (subTab === 'approvals') {
+            const { data: reqData } = await supabase
+                .from('academy_change_requests')
+                .select('academy_id')
+                .eq('status', 'PENDING');
+                
+            const pendingIds = reqData?.map(r => r.academy_id) || [];
+            
+            if (pendingIds.length > 0) {
+                query = query.or(`status.eq.PENDING,id.in.(${pendingIds.join(',')})`);
+            } else {
+                query = query.eq('status', 'PENDING');
+            }
+        } else {
+            query = query.eq('status', 'APPROVED');
+        }
     }
 
     const { data, count, error } = await query
@@ -155,6 +164,7 @@ export const academyService = {
             responsibleCpf: a.responsible_cpf,
             phone: a.phone,
             status: a.status as RegistrationStatus,
+            deleted: a.deleted,
             address: a.address,
             blackBeltCertificate: { 
                 url: a.certificate_url, 
@@ -236,9 +246,10 @@ export const academyService = {
   },
 
   async deleteAcademy(academyId: string) {
+    // ALTERAÇÃO SOLICITADA: Soft Delete em vez de remoção física
     const { error } = await supabase
         .from('academies')
-        .delete()
+        .update({ deleted: 'yes' })
         .eq('id', academyId);
     
     if (error) throw error;

@@ -27,6 +27,7 @@ export const ChangeAcademyModal: React.FC<ChangeAcademyModalProps> = ({
       let query = supabase.from('academies')
         .select('*')
         .eq('status', 'APPROVED')
+        .eq('deleted', 'no') // Filtro de lixeira adicionado
         .order('name', { ascending: true })
         .limit(20);
       

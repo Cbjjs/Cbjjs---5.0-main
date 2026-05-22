@@ -10,7 +10,7 @@ export function useAdminAcademies() {
   const queryClient = useQueryClient();
   const PAGE_SIZE = 10;
 
-  const [subTab, setSubTab] = useState<'approvals' | 'all'>('approvals');
+  const [subTab, setSubTab] = useState<'approvals' | 'all' | 'trash'>('approvals');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [viewingAcademy, setViewingAcademy] = useState<AcademyWithProfile | null>(null);
@@ -117,10 +117,10 @@ export function useAdminAcademies() {
     setIsDeleting(true);
     try {
       await academyService.deleteAcademy(academyId);
-      addToast('success', "Academia removida permanentemente.");
+      addToast('success', "Academia enviada para a lixeira.");
       queryClient.invalidateQueries({ queryKey: ['admin-academies'] });
     } catch (err: any) {
-      addToast('error', err.message || "Erro ao excluir. Verifique se existem atletas vinculados.");
+      addToast('error', err.message || "Erro ao excluir.");
     } finally {
       setIsDeleting(false);
     }
@@ -141,7 +141,7 @@ export function useAdminAcademies() {
     isDeleting,
     rejectingDoc,
     rejectionReason,
-    setSubTab: (tab: 'approvals' | 'all') => { setSubTab(tab); setPage(1); },
+    setSubTab: (tab: 'approvals' | 'all' | 'trash') => { setSubTab(tab); setPage(1); },
     setSearchTerm: (term: string) => { setSearchTerm(term); setPage(1); },
     setPage,
     setViewingAcademy,
