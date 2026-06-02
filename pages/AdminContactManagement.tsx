@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Search, RefreshCw, MessageCircle, Table, FileSpreadsheet, Users } from 'lucide-react';
+import { Search, RefreshCw, MessageCircle, FileSpreadsheet, BookOpen } from 'lucide-react';
 import { useAdminContacts } from '../hooks/useAdminContacts';
 import { AdminListSkeleton, AdminErrorState } from '../components/AdminShared';
 import { Belt } from '../types';
@@ -38,7 +38,6 @@ export const AdminContactManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* FILTROS */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-700 shadow-sm space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -70,7 +69,6 @@ export const AdminContactManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* TABELA ESTILO PLANILHA */}
       <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-gray-100 dark:border-slate-700 shadow-xl overflow-hidden">
         {isLoading ? (
           <AdminListSkeleton />
@@ -82,31 +80,29 @@ export const AdminContactManagement: React.FC = () => {
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-900/50 border-b dark:border-slate-700">
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-r dark:border-slate-700">Atleta</th>
-                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-r dark:border-slate-700">Unidade / Academia</th>
+                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-r dark:border-slate-700">Unidade</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-r dark:border-slate-700">Faixa</th>
-                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">WhatsApp / Telefone</th>
+                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">WhatsApp</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-slate-700">
                 {contacts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-20 text-center text-gray-400 font-medium italic">
-                      Nenhum contato encontrado para os filtros selecionados.
-                    </td>
+                    <td colSpan={4} className="p-20 text-center text-gray-400 font-medium italic">Nenhum contato encontrado.</td>
                   </tr>
                 ) : (
                   contacts.map((contact) => (
                     <tr key={contact.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
                       <td className="p-4 border-r dark:border-slate-700">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-cbjjs-blue font-black text-xs shadow-inner overflow-hidden shrink-0">
-                            {contact.profileImage ? <img src={contact.profileImage} className="w-full h-full object-cover" /> : contact.fullName.substring(0,2).toUpperCase()}
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-cbjjs-blue font-black text-xs shadow-inner shrink-0">
+                            {contact.profileImage ? <img src={contact.profileImage} className="w-full h-full object-cover rounded-lg" /> : contact.fullName.substring(0,2).toUpperCase()}
                           </div>
                           <span className="font-bold text-sm dark:text-white truncate max-w-[180px]">{contact.fullName}</span>
                         </div>
                       </td>
                       <td className="p-4 border-r dark:border-slate-700">
-                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 italic">{(contact as any).academyName}</span>
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{(contact as any).academyName}</span>
                       </td>
                       <td className="p-4 border-r dark:border-slate-700">
                         <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-[10px] font-black uppercase text-gray-500">
@@ -123,7 +119,7 @@ export const AdminContactManagement: React.FC = () => {
                           </span>
                           {contact.phone && (
                             <div className="p-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MessageCircle size={16} fill="currentColor" className="text-green-500" />
+                              <MessageCircle size={16} fill="currentColor" />
                             </div>
                           )}
                         </div>
@@ -139,7 +135,7 @@ export const AdminContactManagement: React.FC = () => {
 
       <div className="flex items-center justify-center gap-2 text-gray-400 py-4">
         <FileSpreadsheet size={16} />
-        <p className="text-[10px] font-black uppercase tracking-widest">Total de registros exibidos: {contacts.length}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest">Total: {contacts.length} registros</p>
       </div>
     </div>
   );

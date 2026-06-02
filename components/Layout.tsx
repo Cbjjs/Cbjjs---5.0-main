@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Role } from '../types';
 import { SidebarProfile } from './SidebarProfile';
 import { 
-  Menu, X, Users, Calendar, LogOut, Sun, Moon, Shield, Award, CreditCard, Building, School, Settings, UserCheck, UserPlus, Printer, Contact, Scan
+  Menu, X, Users, Calendar, LogOut, Sun, Moon, Shield, Award, CreditCard, Building, School, Settings, UserCheck, UserPlus, Printer, Contact, Scan, BookOpen
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -60,6 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
       title: 'Administração',
       items: [
          { id: 'admin-event-access', label: 'Acesso Evento', icon: Scan, roles: [Role.ADMIN] },
+         { id: 'admin-contacts', label: 'Gestão de Contatos', icon: BookOpen, roles: [Role.ADMIN] },
          { id: 'admin-all-users', label: 'Gestão de Contas', icon: Contact, roles: [Role.ADMIN] },
          { id: 'admin-users', label: 'Gestão Atletas', icon: Users, roles: [Role.ADMIN] },
          { id: 'admin-professors', label: 'Gestão Professores', icon: UserCheck, roles: [Role.ADMIN] },
