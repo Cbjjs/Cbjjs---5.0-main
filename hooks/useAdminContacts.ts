@@ -12,9 +12,18 @@ export function useAdminContacts() {
     ['admin-contacts-list'],
     async (signal) => {
       // Busca tanto perfis quanto dependentes que tenham unidade aprovada
+      // Usamos !profiles_academy_id_fkey para resolver a ambiguidade do relacionamento
       const [resP, resD] = await Promise.all([
-        supabase.from('profiles').select('*, academies(name)').eq('academy_status', 'APPROVED').abortSignal(signal!),
-        supabase.from('dependents').select('*, academies(name)').eq('academy_status', 'APPROVED').abortSignal(signal!)
+        supabase
+          .from('profiles')
+          .select('*, academies!profiles_academy_id_fkey(name)')
+          .eq('academy_status', 'APPROVED')
+          .abortSignal(signal!),
+        supabase
+          .from('dependents')
+          .select('*, academies(name)')
+          .eq('academy_status', 'APPROVED')
+          .abortSignal(signal!)
       ]);
 
       if (resP.error) return { data: null, error: resP.error };
