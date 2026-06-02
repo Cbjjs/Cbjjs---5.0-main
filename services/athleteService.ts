@@ -134,6 +134,7 @@ export const athleteService = {
       dob: dob || '',
       role: data.role || Role.STUDENT,
       cpf: data.cpf,
+      phone: data.phone, // Mapeamento do telefone adicionado
       nationality: data.nationality,
       gender: data.gender,
       isBoardingComplete: !!data.is_boarding_complete,

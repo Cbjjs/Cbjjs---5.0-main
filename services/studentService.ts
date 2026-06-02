@@ -68,6 +68,7 @@ export const studentService = {
       fullName: p.full_name, 
       email: p.email, 
       dob: p.dob, 
+      phone: p.phone, // Mapeamento do telefone adicionado
       role: p.role as Role,
       isBoardingComplete: p.is_boarding_complete, 
       paymentStatus: (p.payment_status as PaymentStatus) || PaymentStatus.PENDING, 
@@ -96,6 +97,7 @@ export const studentService = {
       fullName: d.full_name, 
       email: '', 
       dob: d.dob, 
+      phone: d.phone, // Mapeamento do telefone adicionado
       role: Role.STUDENT,
       isBoardingComplete: true, 
       paymentStatus: (d.payment_status as PaymentStatus) || PaymentStatus.PENDING, 

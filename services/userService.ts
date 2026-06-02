@@ -27,6 +27,7 @@ export const userService = {
           fullName: p.full_name || 'Usuário Sem Nome',
           email: p.email,
           dob: p.dob || '',
+          phone: p.phone, // Mapeamento do telefone adicionado
           role: p.role as Role,
           isBoardingComplete: !!p.is_boarding_complete,
           profileImage: p.profile_image_url,
