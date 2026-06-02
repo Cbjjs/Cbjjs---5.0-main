@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Mail, User, Calendar, AlertCircle, CheckCircle, ArrowLeft, Send, KeyRound } from 'lucide-react';
+import { Shield, Mail, User, Calendar, AlertCircle, CheckCircle, ArrowLeft, Send, KeyRound, Smartphone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { PasswordInput } from '../components/PasswordInput';
+import { formatPhone } from '../utils/validators';
 
 type LoginView = 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD';
 
@@ -25,6 +26,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
+  const [phone, setPhone] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export const Login: React.FC = () => {
     if (view === 'LOGIN') {
       await login(email, password);
     } else if (view === 'REGISTER') {
-      await register({ fullName, email, dob }, password);
+      await register({ fullName, email, dob, phone }, password);
     } else if (view === 'FORGOT_PASSWORD') {
       await forgotPassword(email);
       setIsSuccess(true);
@@ -119,7 +121,10 @@ export const Login: React.FC = () => {
                         {view === 'REGISTER' && (
                             <>
                                 <div className="relative"><User className="absolute left-3 top-3.5 text-gray-400" size={20} /><input type="text" placeholder="Nome completo" className={inputClass} required value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
-                                <div className="relative"><Calendar className="absolute left-3 top-3.5 text-gray-400" size={20} /><input type="date" className={inputClass} required value={dob} onChange={e=>setDob(e.target.value)} /></div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="relative"><Calendar className="absolute left-3 top-3.5 text-gray-400" size={20} /><input type="date" className={inputClass} required value={dob} onChange={e=>setDob(e.target.value)} /></div>
+                                    <div className="relative"><Smartphone className="absolute left-3 top-3.5 text-gray-400" size={20} /><input type="text" placeholder="Telefone / WhatsApp" className={inputClass} required value={phone} onChange={e=>setPhone(formatPhone(e.target.value))} maxLength={15} /></div>
+                                </div>
                             </>
                         )}
                         

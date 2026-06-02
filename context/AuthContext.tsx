@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fullName: profile.full_name || 'Usuário',
         email: profile.email || authEmail || '',
         dob: profile.dob || '', 
+        phone: profile.phone || '',
         role: (profile.role as Role) || Role.STUDENT,
         isBoardingComplete: !!profile.is_boarding_complete,
         isFederationApproved: !!profile.is_federation_approved,
@@ -192,7 +193,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         options: { 
           data: { 
             full_name: userData.fullName,
-            dob: userData.dob 
+            dob: userData.dob,
+            phone: userData.phone
           }, 
           emailRedirectTo: window.location.origin 
         }
@@ -230,13 +232,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       email: updates.email,
       dob: updates.dob,
       cpf: updates.cpf,
+      phone: updates.phone,
       nationality: updates.nationality,
       gender: updates.gender,
       address: updates.address,
       belt: updates.athleteData?.belt,
       belt_history: updates.athleteData,
       theme: updates.theme,
-      academy_id: updates.academyId // Adicionado para permitir troca de academia
+      academy_id: updates.academyId 
     }).eq('id', user.id);
     
     if (error) throw error;
