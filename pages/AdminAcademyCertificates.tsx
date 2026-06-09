@@ -196,14 +196,14 @@ export const AdminAcademyCertificates: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center">
+                                        <div className="flex items-center shrink-0">
                                             {cert.statusDelivery !== CertificateDeliveryStatus.DELIVERED && (
-                                                <button 
+                                                <button
                                                     onClick={() => handleUpdateStatus(cert.id, CertificateDeliveryStatus.DELIVERED)}
                                                     disabled={updatingId === cert.id}
-                                                    className="w-full md:w-auto px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-cbjjs-blue"
+                                                    className="w-full md:w-auto px-6 py-3.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-cbjjs-blue"
                                                 >
-                                                    {updatingId === cert.id ? <Loader2 className="animate-spin" size={16}/> : <Truck size={16}/>}
+                                                    {updatingId === cert.id ? <Loader2 className="animate-spin" size={14}/> : <Truck size={16}/>}
                                                     Marcar como Entregue
                                                 </button>
                                             )}
