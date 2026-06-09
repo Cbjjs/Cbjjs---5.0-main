@@ -32,8 +32,10 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
       >
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="text-2xl font-black dark:text-white group-hover:text-cbjjs-blue transition-colors leading-none mb-2">{academy.name}</h3>
-            <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">{academy.teamName}</p>
+            <h3 className="text-2xl font-black dark:text-white group-hover:text-cbjjs-blue transition-colors leading-none mb-1">{academy.name}</h3>
+            <div className="flex items-center gap-1.5 text-sm text-gray-500 font-bold uppercase tracking-wider">
+              <MapPin size={16} className="text-cbjjs-blue" /> {academy.address?.city} - {academy.address?.state}
+            </div>
           </div>
           <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase border ${academy.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
             {academy.status === 'PENDING' ? 'Em Análise' : 'Aprovada'}
@@ -64,9 +66,7 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-          <MapPin size={18} className="text-cbjjs-blue" /> {academy.address?.city} - {academy.address?.state}
-        </div>
+        <div className="h-4"></div>
         
         <div className="absolute bottom-[-24px] left-0 right-0 px-8 flex gap-3 justify-center z-20">
           <button
