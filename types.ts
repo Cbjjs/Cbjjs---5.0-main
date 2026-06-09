@@ -44,6 +44,10 @@ export enum PaymentStatus {
   OVERDUE = 'OVERDUE'
 }
 
+// Novos Enums para Certificados
+export type CertificatePaymentStatus = 'PENDING' | 'PAID';
+export type CertificateDeliveryStatus = 'WAITING_PAYMENT' | 'PRODUCING' | 'DELIVERED';
+
 export interface UserDocument {
   url?: string;
   status: DocumentStatus;
@@ -68,6 +72,21 @@ export interface AcademyChangeRequest {
   newData: any;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
+}
+
+export interface AcademyCertificate {
+  id: string;
+  academyId: string;
+  ownerId: string;
+  amount: number;
+  statusPayment: CertificatePaymentStatus;
+  statusDelivery: CertificateDeliveryStatus;
+  billingId?: string;
+  createdAt: string;
+  paidAt?: string;
+  // Campos para visualização administrativa (joins)
+  academyName?: string;
+  ownerName?: string;
 }
 
 export interface Dependent {
@@ -204,4 +223,6 @@ export interface Academy {
   status: RegistrationStatus;
   deleted?: string;
   pendingChangeRequest?: AcademyChangeRequest;
+  // Novo: Indica se possui certificado solicitado
+  certificate?: AcademyCertificate;
 }

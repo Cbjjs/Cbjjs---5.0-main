@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Save, RefreshCw, Loader2, Settings, CreditCard, Layout, Eye, EyeOff } from 'lucide-react';
+import { Save, RefreshCw, Loader2, Settings, CreditCard, Layout, Eye, EyeOff, Award } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
-import { AdminListSkeleton, AdminErrorState } from '../components/AdminShared';
+import { AdminListSkeleton, modalInputClass, modalLabelClass, AdminErrorState } from '../components/AdminShared';
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery';
 
 interface Setting {
@@ -53,25 +53,32 @@ export const AdminSettings: React.FC = () => {
       return settings.find(s => s.key === key)?.value || defaultValue;
   };
 
-  const PlanCard = ({ id, label, priceKey, activeKey }: { id: string, label: string, priceKey: string, activeKey: string }) => {
+  const PlanCard = ({ id, label, priceKey, activeKey, icon: Icon = CreditCard }: { id: string, label: string, priceKey: string, activeKey?: string, icon?: any }) => {
       const price = getSetting(priceKey, '30.00');
-      const isActive = getSetting(activeKey, 'true') === 'true';
+      const isActive = activeKey ? getSetting(activeKey, 'true') === 'true' : true;
 
       return (
         <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm group hover:border-cbjjs-blue transition-all">
             <div className="flex justify-between items-start mb-6">
-                <div>
-                    <span className="text-[10px] font-black text-cbjjs-blue uppercase tracking-[0.2em] block mb-1">Configuração do Plano</span>
-                    <h3 className="text-xl font-black dark:text-white uppercase">{label}</h3>
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-cbjjs-blue">
+                        <Icon size={24} />
+                    </div>
+                    <div>
+                        <span className="text-[10px] font-black text-cbjjs-blue uppercase tracking-[0.2em] block mb-0.5">Configuração de Valor</span>
+                        <h3 className="text-xl font-black dark:text-white uppercase leading-tight">{label}</h3>
+                    </div>
                 </div>
-                <button 
-                    onClick={() => handleUpdateSetting(activeKey, isActive ? 'false' : 'true')}
-                    disabled={savingKey === activeKey}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${isActive ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
-                >
-                    {savingKey === activeKey ? <Loader2 className="animate-spin" size={14}/> : isActive ? <Eye size={14}/> : <EyeOff size={14}/>}
-                    {isActive ? 'Ativo' : 'Oculto'}
-                </button>
+                {activeKey && (
+                    <button 
+                        onClick={() => handleUpdateSetting(activeKey, isActive ? 'false' : 'true')}
+                        disabled={savingKey === activeKey}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${isActive ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
+                    >
+                        {savingKey === activeKey ? <Loader2 className="animate-spin" size={14}/> : isActive ? <Eye size={14}/> : <EyeOff size={14}/>}
+                        {isActive ? 'Ativo' : 'Oculto'}
+                    </button>
+                )}
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
@@ -117,11 +124,12 @@ export const AdminSettings: React.FC = () => {
                    <section>
                        <div className="flex items-center gap-3 mb-6">
                            <CreditCard className="text-cbjjs-blue" size={24} />
-                           <h3 className="text-lg font-black uppercase tracking-widest dark:text-white">Planos de Afiliação</h3>
+                           <h3 className="text-lg font-black uppercase tracking-widest dark:text-white">Planos de Afiliação e Taxas</h3>
                        </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <PlanCard id="digital" label="Versão Digital" priceKey="plan_digital_price" activeKey="plan_digital_active" />
                            <PlanCard id="printed" label="Versão Impressa" priceKey="plan_printed_price" activeKey="plan_printed_active" />
+                           <PlanCard id="academy_cert" label="Certificado Academia" priceKey="academy_certificate_price" icon={Award} />
                        </div>
                    </section>
 
@@ -131,7 +139,7 @@ export const AdminSettings: React.FC = () => {
                            <h3 className="text-lg font-black uppercase tracking-widest dark:text-white">Conteúdo do Site</h3>
                         </div>
                         <div className="grid grid-cols-1 gap-6">
-                            {settings.filter(s => !s.key.includes('plan_') && s.key !== 'registration_fee').map(s => (
+                            {settings.filter(s => !s.key.includes('plan_') && s.key !== 'registration_fee' && s.key !== 'academy_certificate_price').map(s => (
                                 <div key={s.key} className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm group hover:border-cbjjs-blue transition-all">
                                     <label className="text-[10px] font-black text-cbjjs-blue uppercase tracking-widest block mb-4 flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-cbjjs-blue rounded-full"></div>
