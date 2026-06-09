@@ -122,7 +122,9 @@ export const AdminSettings: React.FC = () => {
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <PlanCard id="digital" label="Versão Digital" priceKey="plan_digital_price" activeKey="plan_digital_active" />
                            <PlanCard id="printed" label="Versão Impressa" priceKey="plan_printed_price" activeKey="plan_printed_active" />
+                           <PlanCard id="certificate" label="Certificado Academia" priceKey="academy_certificate_price" activeKey="academy_certificate_active" />
                        </div>
+
                    </section>
 
                    <section>

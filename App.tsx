@@ -76,7 +76,9 @@ const AppContent: React.FC = () => {
       case 'admin-users': return user?.role === Role.ADMIN ? <AdminPanel view="users" /> : <Dashboard />;
       case 'admin-professors': return user?.role === Role.ADMIN ? <AdminPanel view="professors" /> : <Dashboard />;
       case 'admin-academies': return user?.role === Role.ADMIN ? <AdminPanel view="academies" /> : <Dashboard />;
+      case 'admin-certificates': return user?.role === Role.ADMIN ? <AdminPanel view="academy-certificates" /> : <Dashboard />;
       case 'admin-id-cards': return user?.role === Role.ADMIN ? <AdminIDCards /> : <Dashboard />;
+
       case 'admin-events': return user?.role === Role.ADMIN ? <AdminPanel view="events" /> : <Dashboard />;
       case 'admin-settings': return user?.role === Role.ADMIN ? <AdminPanel view="settings" /> : <Dashboard />;
       case 'admin-all-users': return user?.role === Role.ADMIN ? <AdminPanel view="all-users" /> : <Dashboard />;

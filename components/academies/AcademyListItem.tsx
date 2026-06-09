@@ -1,18 +1,20 @@
 import React from 'react';
-import { MapPin, AlertCircle, Plus } from 'lucide-react';
+import { MapPin, AlertCircle, Plus, FileCheck, Upload } from 'lucide-react';
 import { Academy, DocumentStatus } from '../../types';
 
 interface AcademyListItemProps {
   academy: Academy;
   onClick: (academy: Academy) => void;
   onUploadClick: (id: string) => void;
+  onRequestCertificate: (academy: Academy) => void;
   getDocStatusLabel: (status: DocumentStatus) => string;
   getDocStatusColor: (status: DocumentStatus) => string;
 }
 
-export const AcademyListItem: React.FC<AcademyListItemProps> = ({ 
-  academy, onClick, onUploadClick, getDocStatusLabel, getDocStatusColor 
+export const AcademyListItem: React.FC<AcademyListItemProps> = ({
+  academy, onClick, onUploadClick, onRequestCertificate, getDocStatusLabel, getDocStatusColor
 }) => {
+
   const isRejected = academy.blackBeltCertificate?.status === DocumentStatus.REJECTED || 
                      academy.identityDocument?.status === DocumentStatus.REJECTED;
   
@@ -66,12 +68,19 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
           <MapPin size={18} className="text-cbjjs-blue" /> {academy.address?.city} - {academy.address?.state}
         </div>
         
-        <div className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 z-20">
-          <button 
+        <div className="absolute bottom-[-24px] left-0 right-0 px-8 flex gap-3 justify-center z-20">
+          <button
             onClick={(e) => { e.stopPropagation(); onUploadClick(academy.id); }}
-            className={`w-12 h-12 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative z-10 border-4 border-white dark:border-slate-800 ${isRejected ? 'bg-red-600' : 'bg-cbjjs-blue'}`}
+            className={`flex-1 h-12 text-white rounded-2xl shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all border-4 border-white dark:border-slate-800 text-[10px] font-black uppercase tracking-widest ${isRejected ? 'bg-red-600' : 'bg-cbjjs-blue'}`}
           >
-            <Plus size={24} />
+            <Upload size={16} /> Documentos
+          </button>
+          
+          <button
+            onClick={(e) => { e.stopPropagation(); onRequestCertificate(academy); }}
+            className="flex-1 h-12 bg-cbjjs-green text-white rounded-2xl shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all border-4 border-white dark:border-slate-800 text-[10px] font-black uppercase tracking-widest"
+          >
+            <FileCheck size={16} /> Certificado
           </button>
         </div>
       </div>

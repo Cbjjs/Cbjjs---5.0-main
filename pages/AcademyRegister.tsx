@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Building, CheckCircle, ChevronRight, ChevronLeft, Plus, Loader2, FileText, X, Edit, Save, RefreshCw, Camera } from 'lucide-react';
+
 import { useMyAcademies } from '../hooks/useMyAcademies';
 import { DocumentStatus } from '../types';
 import { BRAZIL_STATES } from '../constants';
 import { AdminListSkeleton, AdminErrorState } from '../components/AdminShared';
 import { AcademyListItem } from '../components/academies/AcademyListItem';
 import { AcademyEmptyState } from '../components/academies/AcademyEmptyState';
+import { RequestCertificateModal } from '../components/academies/RequestCertificateModal';
+import { useAcademyCertificates } from '../hooks/useAcademyCertificates';
+import { Academy } from '../types';
 
-const inputClass = (hasError: boolean, isReadOnly: boolean = false) => 
+const inputClass = (hasError: boolean, isReadOnly: boolean = false) =>
+
     `w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white outline-none transition-all placeholder-gray-400 
     ${isReadOnly ? 'bg-gray-100 dark:bg-slate-800 cursor-not-allowed opacity-70' : 'bg-gray-50 dark:bg-slate-700'}
     ${hasError ? 'border-red-500 ring-1 ring-red-200 focus:ring-red-200' : 'border-gray-200 dark:border-slate-600 focus:ring-2 focus:ring-cbjjs-blue focus:border-transparent'}`;
@@ -23,7 +28,11 @@ export const AcademyRegister: React.FC = () => {
         startEditing, refetch, setFormData
     } = useMyAcademies();
 
+    const { price, isRequesting, handleRequest } = useAcademyCertificates();
+    const [requestingAcademy, setRequestingAcademy] = useState<Academy | null>(null);
+
     const handleOpenUploadPortal = (academyId: string) => {
+
         window.location.href = `/upload-docs.html?id=${academyId}`;
     };
 
@@ -78,9 +87,11 @@ export const AcademyRegister: React.FC = () => {
                                         academy={acc}
                                         onClick={setSelectedAcademy}
                                         onUploadClick={handleOpenUploadPortal}
+                                        onRequestCertificate={(academy) => setRequestingAcademy(academy)}
                                         getDocStatusLabel={getDocStatusLabel}
                                         getDocStatusColor={getDocStatusColor}
                                     />
+
                                 ))}
                             </div>
                         )}
@@ -255,6 +266,17 @@ export const AcademyRegister: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {requestingAcademy && (
+                <RequestCertificateModal
+                    academy={requestingAcademy}
+                    price={price}
+                    isOpen={!!requestingAcademy}
+                    onClose={() => setRequestingAcademy(null)}
+                    onConfirm={handleRequest}
+                    isSubmitting={isRequesting}
+                />
             )}
         </div>
     );

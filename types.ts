@@ -31,6 +31,18 @@ export enum RegistrationStatus {
   REJECTED = 'REJECTED'
 }
 
+export enum CertificatePaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE'
+}
+
+export enum CertificateDeliveryStatus {
+  WAITING_PAYMENT = 'WAITING_PAYMENT',
+  PRODUCING = 'PRODUCING',
+  DELIVERED = 'DELIVERED'
+}
+
 export enum DocumentStatus {
   MISSING = 'MISSING',
   PENDING = 'PENDING',
@@ -189,6 +201,7 @@ export interface Academy {
   teamName?: string;
   ownerId: string;
   cnpj?: string;
+
   responsibleCpf?: string;
   phone?: string;
   address?: {
@@ -204,4 +217,20 @@ export interface Academy {
   status: RegistrationStatus;
   deleted?: string;
   pendingChangeRequest?: AcademyChangeRequest;
+}
+
+export interface AcademyCertificate {
+  id: string;
+  academyId: string;
+  ownerId: string;
+  amount: number;
+  statusPayment: CertificatePaymentStatus;
+  statusDelivery: CertificateDeliveryStatus;
+  billingId?: string;
+  createdAt: string;
+  paidAt?: string;
+  academy?: Academy;
+  owner?: {
+    fullName: string;
+  };
 }
