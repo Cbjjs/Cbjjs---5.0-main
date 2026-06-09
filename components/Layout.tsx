@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Role } from '../types';
 import { SidebarProfile } from './SidebarProfile';
 import { 
-  Menu, X, Users, Calendar, LogOut, Sun, Moon, Shield, Award, CreditCard, Building, School, Settings, UserCheck, UserPlus, Printer, Contact, Scan, BookOpen, FileBadge
+  Menu, X, Users, Calendar, LogOut, Sun, Moon, Shield, Award, CreditCard, Building, School, Settings, UserCheck, UserPlus, Printer, Contact, Scan, BookOpen
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -65,7 +65,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
          { id: 'admin-users', label: 'Gestão Atletas', icon: Users, roles: [Role.ADMIN] },
          { id: 'admin-professors', label: 'Gestão Professores', icon: UserCheck, roles: [Role.ADMIN] },
          { id: 'admin-academies', label: 'Gestão Academias', icon: School, roles: [Role.ADMIN] },
-         { id: 'admin-academy-certificates', label: 'Certificados Acad.', icon: FileBadge, roles: [Role.ADMIN] },
          { id: 'admin-id-cards', label: 'Carteirinhas', icon: Printer, roles: [Role.ADMIN] }, 
          { id: 'admin-events', label: 'Gestão Eventos', icon: Calendar, roles: [Role.ADMIN] },
          { id: 'admin-settings', label: 'Gestão Informações', icon: Settings, roles: [Role.ADMIN] },

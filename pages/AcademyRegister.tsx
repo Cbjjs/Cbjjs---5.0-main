@@ -1,14 +1,11 @@
 import React from 'react';
-import { Building, CheckCircle, ChevronRight, ChevronLeft, Plus, Loader2, FileText, X, Edit, Save, RefreshCw, Camera, Award, Smartphone } from 'lucide-react';
+import { Building, CheckCircle, ChevronRight, ChevronLeft, Plus, Loader2, FileText, X, Edit, Save, RefreshCw, Camera } from 'lucide-react';
 import { useMyAcademies } from '../hooks/useMyAcademies';
-import { useAcademyCertificates } from '../hooks/useAcademyCertificates';
 import { DocumentStatus } from '../types';
 import { BRAZIL_STATES } from '../constants';
 import { AdminListSkeleton, AdminErrorState } from '../components/AdminShared';
 import { AcademyListItem } from '../components/academies/AcademyListItem';
 import { AcademyEmptyState } from '../components/academies/AcademyEmptyState';
-import { RequestCertificateModal } from '../components/academies/RequestCertificateModal';
-import { PaymentModal } from '../components/PaymentModal';
 
 const inputClass = (hasError: boolean, isReadOnly: boolean = false) => 
     `w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white outline-none transition-all placeholder-gray-400 
@@ -25,8 +22,6 @@ export const AcademyRegister: React.FC = () => {
         validateStep, handleSubmitNew, handleSaveUpdate, resetForm,
         startEditing, refetch, setFormData
     } = useMyAcademies();
-
-    const certLogic = useAcademyCertificates();
 
     const handleOpenUploadPortal = (academyId: string) => {
         window.location.href = `/upload-docs.html?id=${academyId}`;
@@ -83,7 +78,6 @@ export const AcademyRegister: React.FC = () => {
                                         academy={acc}
                                         onClick={setSelectedAcademy}
                                         onUploadClick={handleOpenUploadPortal}
-                                        onRequestCertificate={certLogic.handleOpenRequest}
                                         getDocStatusLabel={getDocStatusLabel}
                                         getDocStatusColor={getDocStatusColor}
                                     />
@@ -176,7 +170,6 @@ export const AcademyRegister: React.FC = () => {
                                         </div>
                                         <div className="col-span-2"><label className={labelClass}>Rua *</label><input className={inputClass(!!formErrors.street)} value={formData.street} onChange={e => handleChange('street', e.target.value)} /></div>
                                         <div><label className={labelClass}>Cidade *</label><input className={inputClass(!!formErrors.city)} value={formData.city} onChange={e => handleChange('city', e.target.value)} /></div>
-                                        <div><label className={labelClass}>Estado *</label><select className={inputClass(!!formErrors.state)} value={formData.state} onChange={e => handleChange('state', e.target.value)}><option value="">UF</option>{BRAZIL_STATES.map(s => <option key={s.sigla} value={s.sigla}>{s.sigla}</option>)}</select></div>
                                         <div><label className={labelClass}>Número *</label><input className={inputClass(!!formErrors.number)} value={formData.number} onChange={e => handleChange('number', e.target.value)} /></div>
                                         <div className="col-span-2"><label className={labelClass}>Complemento</label><input className={inputClass(false)} value={formData.complement} onChange={e => handleChange('complement', e.target.value)} /></div>
                                     </div>
@@ -263,28 +256,6 @@ export const AcademyRegister: React.FC = () => {
                     </div>
                 </div>
             )}
-
-            <RequestCertificateModal 
-                isOpen={certLogic.isRequestModalOpen}
-                onClose={() => certLogic.setIsRequestModalOpen(false)}
-                academy={certLogic.selectedAcademy}
-                price={certLogic.certificatePrice}
-                onConfirm={certLogic.handleConfirmRequest}
-                isLoading={certLogic.isSubmitting}
-            />
-
-            <PaymentModal 
-                isOpen={certLogic.isPaymentModalOpen}
-                onClose={() => certLogic.setIsPaymentModalOpen(false)}
-                pixId="static-id"
-                pixCode="00020126360014br.gov.bcb.pix0114+55219886497885204000053039865802BR5913CBJJS SOCIAL6009SAO PAULO62070503***6304E2B1"
-                qrCodeBase64="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020126360014br.gov.bcb.pix0114+55219886497885204000053039865802BR5913CBJJS SOCIAL6009SAO PAULO62070503***6304E2B1"
-                amount={certLogic.certificatePrice.toFixed(2).replace('.', ',')}
-                onSuccess={() => {
-                    certLogic.setIsPaymentModalOpen(false);
-                    refetch();
-                }}
-            />
         </div>
     );
 };

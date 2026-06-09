@@ -1,18 +1,17 @@
 import React from 'react';
-import { MapPin, AlertCircle, FileText, Award, Smartphone } from 'lucide-react';
+import { MapPin, AlertCircle, Plus } from 'lucide-react';
 import { Academy, DocumentStatus } from '../../types';
 
 interface AcademyListItemProps {
   academy: Academy;
   onClick: (academy: Academy) => void;
   onUploadClick: (id: string) => void;
-  onRequestCertificate: (academy: Academy) => void;
   getDocStatusLabel: (status: DocumentStatus) => string;
   getDocStatusColor: (status: DocumentStatus) => string;
 }
 
 export const AcademyListItem: React.FC<AcademyListItemProps> = ({ 
-  academy, onClick, onUploadClick, onRequestCertificate, getDocStatusLabel, getDocStatusColor 
+  academy, onClick, onUploadClick, getDocStatusLabel, getDocStatusColor 
 }) => {
   const isRejected = academy.blackBeltCertificate?.status === DocumentStatus.REJECTED || 
                      academy.identityDocument?.status === DocumentStatus.REJECTED;
@@ -22,10 +21,10 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
                         isRejected;
   
   return (
-    <div className="relative h-full flex flex-col">
+    <div className="relative">
       <div 
         onClick={() => onClick(academy)} 
-        className={`bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border transition-all group relative overflow-visible cursor-pointer flex-1 flex flex-col
+        className={`bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border transition-all group relative overflow-visible cursor-pointer
             ${isRejected ? 'border-red-200 bg-red-50/10' : isPendingDocs ? 'animate-pulse-yellow-border border-yellow-200' : 'border-gray-100 dark:border-slate-800 hover:border-cbjjs-blue hover:shadow-xl'}
         `}
       >
@@ -43,7 +42,7 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
           <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-2.5 shadow-sm ${isRejected ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
             {isRejected ? <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" /> : <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />}
             <p className={`text-[10px] font-black uppercase leading-relaxed tracking-tight ${isRejected ? 'text-red-700' : 'text-amber-700'}`}>
-              {isRejected ? 'Documento Recusado: Verifique os detalhes e reenvie.' : 'Envio da documentação necessário para validar a unidade.'}
+              {isRejected ? 'Documento Recusado: Verifique os detalhes e reenvie.' : 'Envio da documentação necessário. Clique no +.'}
             </p>
           </div>
         )}
@@ -63,26 +62,17 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-auto">
+        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
           <MapPin size={18} className="text-cbjjs-blue" /> {academy.address?.city} - {academy.address?.state}
         </div>
         
-        {/* BOTÕES DE AÇÃO NA BASE DO CARD */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8">
-            <button 
-                onClick={(e) => { e.stopPropagation(); onUploadClick(academy.id); }}
-                className={`flex-1 py-3.5 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95
-                    ${isRejected ? 'bg-red-600 text-white shadow-red-500/20' : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'}
-                `}
-            >
-                <FileText size={14} /> Enviar Documentos
-            </button>
-            <button 
-                onClick={(e) => { e.stopPropagation(); onRequestCertificate(academy); }}
-                className="flex-1 py-3.5 bg-cbjjs-blue text-white rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-                <Award size={14} /> Solicitar Certificado
-            </button>
+        <div className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 z-20">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onUploadClick(academy.id); }}
+            className={`w-12 h-12 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative z-10 border-4 border-white dark:border-slate-800 ${isRejected ? 'bg-red-600' : 'bg-cbjjs-blue'}`}
+          >
+            <Plus size={24} />
+          </button>
         </div>
       </div>
     </div>

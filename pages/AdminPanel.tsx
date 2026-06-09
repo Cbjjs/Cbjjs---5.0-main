@@ -5,10 +5,9 @@ import { AdminAcademies } from './AdminAcademies';
 import { AdminEvents } from './AdminEvents';
 import { AdminSettings } from './AdminSettings';
 import { AdminAllUsers } from './AdminAllUsers';
-import { AdminAcademyCertificates } from './AdminAcademyCertificates';
 
 interface AdminPanelProps {
-  view: 'users' | 'professors' | 'academies' | 'events' | 'settings' | 'all-users' | 'academy-certificates';
+  view: 'users' | 'professors' | 'academies' | 'events' | 'settings' | 'all-users';
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ view }) => {
@@ -26,8 +25,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ view }) => {
         return <AdminSettings />;
       case 'all-users':
         return <AdminAllUsers />;
-      case 'academy-certificates':
-        return <AdminAcademyCertificates />;
       default:
         return <AdminAthletes />;
     }

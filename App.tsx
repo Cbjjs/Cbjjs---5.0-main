@@ -33,7 +33,7 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-        const adminPages = ['admin-users', 'admin-professors', 'admin-academies', 'admin-events', 'admin-settings', 'admin-id-cards', 'admin-all-users', 'admin-event-access', 'admin-contacts', 'admin-academy-certificates'];
+        const adminPages = ['admin-users', 'admin-professors', 'admin-academies', 'admin-events', 'admin-settings', 'admin-id-cards', 'admin-all-users', 'admin-event-access', 'admin-contacts'];
         if (adminPages.includes(currentPage) && user.role !== Role.ADMIN) {
             handleNavigate('dashboard');
         }
@@ -80,7 +80,6 @@ const AppContent: React.FC = () => {
       case 'admin-events': return user?.role === Role.ADMIN ? <AdminPanel view="events" /> : <Dashboard />;
       case 'admin-settings': return user?.role === Role.ADMIN ? <AdminPanel view="settings" /> : <Dashboard />;
       case 'admin-all-users': return user?.role === Role.ADMIN ? <AdminPanel view="all-users" /> : <Dashboard />;
-      case 'admin-academy-certificates': return user?.role === Role.ADMIN ? <AdminPanel view="academy-certificates" /> : <Dashboard />;
       default: return <Dashboard />;
     }
   };
