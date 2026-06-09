@@ -44,32 +44,6 @@ export enum PaymentStatus {
   OVERDUE = 'OVERDUE'
 }
 
-export enum CertificatePaymentStatus {
-  PENDING = 'PENDING',
-  PAID = 'PAID'
-}
-
-export enum CertificateDeliveryStatus {
-  WAITING_PAYMENT = 'WAITING_PAYMENT',
-  PRODUCING = 'PRODUCING',
-  DELIVERED = 'DELIVERED'
-}
-
-export interface AcademyCertificate {
-  id: string;
-  academyId: string;
-  ownerId: string;
-  amount: number;
-  statusPayment: CertificatePaymentStatus;
-  statusDelivery: CertificateDeliveryStatus;
-  billingId?: string;
-  createdAt: string;
-  paidAt?: string;
-  // Joins para admin
-  ownerName?: string;
-  academyName?: string;
-}
-
 export interface UserDocument {
   url?: string;
   status: DocumentStatus;

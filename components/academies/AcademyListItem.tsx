@@ -1,18 +1,17 @@
 import React from 'react';
-import { MapPin, AlertCircle, FileText, Award } from 'lucide-react';
+import { MapPin, AlertCircle, Plus } from 'lucide-react';
 import { Academy, DocumentStatus } from '../../types';
 
 interface AcademyListItemProps {
   academy: Academy;
   onClick: (academy: Academy) => void;
   onUploadClick: (id: string) => void;
-  onRequestCertificate: (academy: Academy) => void; // Nova prop
   getDocStatusLabel: (status: DocumentStatus) => string;
   getDocStatusColor: (status: DocumentStatus) => string;
 }
 
 export const AcademyListItem: React.FC<AcademyListItemProps> = ({ 
-  academy, onClick, onUploadClick, onRequestCertificate, getDocStatusLabel, getDocStatusColor 
+  academy, onClick, onUploadClick, getDocStatusLabel, getDocStatusColor 
 }) => {
   const isRejected = academy.blackBeltCertificate?.status === DocumentStatus.REJECTED || 
                      academy.identityDocument?.status === DocumentStatus.REJECTED;
@@ -22,10 +21,10 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
                         isRejected;
   
   return (
-    <div className="relative group">
+    <div className="relative">
       <div 
         onClick={() => onClick(academy)} 
-        className={`bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border transition-all relative overflow-hidden cursor-pointer
+        className={`bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border transition-all group relative overflow-visible cursor-pointer
             ${isRejected ? 'border-red-200 bg-red-50/10' : isPendingDocs ? 'animate-pulse-yellow-border border-yellow-200' : 'border-gray-100 dark:border-slate-800 hover:border-cbjjs-blue hover:shadow-xl'}
         `}
       >
@@ -38,25 +37,17 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
             {academy.status === 'PENDING' ? 'Em Análise' : 'Aprovada'}
           </span>
         </div>
-
-        {/* Localização em Destaque */}
-        <div className="mb-6 flex items-center gap-2 p-3 bg-gray-50 dark:bg-slate-900/50 rounded-2xl border dark:border-slate-700">
-            <MapPin size={18} className="text-cbjjs-blue" />
-            <span className="text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-tight">
-                {academy.address?.city} / {academy.address?.state}
-            </span>
-        </div>
         
         {isPendingDocs && (
           <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-2.5 shadow-sm ${isRejected ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
             {isRejected ? <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" /> : <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />}
             <p className={`text-[10px] font-black uppercase leading-relaxed tracking-tight ${isRejected ? 'text-red-700' : 'text-amber-700'}`}>
-              {isRejected ? 'Documento Recusado: Verifique os detalhes e reenvie.' : 'Envio da documentação necessário para validação.'}
+              {isRejected ? 'Documento Recusado: Verifique os detalhes e reenvie.' : 'Envio da documentação necessário. Clique no +.'}
             </p>
           </div>
         )}
 
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3 mb-6">
           <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
             <span className="text-gray-400">Identidade / CNH</span>
             <span className={getDocStatusColor(academy.identityDocument?.status || DocumentStatus.MISSING)}>
@@ -71,22 +62,16 @@ export const AcademyListItem: React.FC<AcademyListItemProps> = ({
           </div>
         </div>
 
-        {/* Sistema de Botões de Ação */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+          <MapPin size={18} className="text-cbjjs-blue" /> {academy.address?.city} - {academy.address?.state}
+        </div>
+        
+        <div className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 z-20">
           <button 
             onClick={(e) => { e.stopPropagation(); onUploadClick(academy.id); }}
-            className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95 shadow-lg
-                ${isRejected ? 'bg-red-600 text-white shadow-red-500/20' : 'bg-cbjjs-blue text-white shadow-blue-500/20'}
-            `}
+            className={`w-12 h-12 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative z-10 border-4 border-white dark:border-slate-800 ${isRejected ? 'bg-red-600' : 'bg-cbjjs-blue'}`}
           >
-            <FileText size={16} /> Enviar Documentos
-          </button>
-          
-          <button 
-            onClick={(e) => { e.stopPropagation(); onRequestCertificate(academy); }}
-            className="flex items-center justify-center gap-2 py-3.5 bg-cbjjs-green text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95 shadow-lg shadow-green-500/20"
-          >
-            <Award size={16} /> Solicitar Certificado
+            <Plus size={24} />
           </button>
         </div>
       </div>
